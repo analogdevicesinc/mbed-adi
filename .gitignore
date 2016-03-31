@@ -24,5 +24,30 @@
 
 # Executables
 *.exe
+*.bat
 *.out
 *.app
+
+# Eclipse workspace
+*.cproject
+*.project
+.metadata
+*.tmp
+*.bak
+local.properties
+.settings/
+.loadpath
+.recommenders
+
+# Build products and byproducts
+*.d
+*.o
+*.bin
+*.elf
+*.hex
+*.map
+
+# mbed folder
+mbed/*
+!mbed/README.md
+
