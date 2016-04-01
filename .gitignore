@@ -51,3 +51,6 @@ local.properties
 mbed/*
 !mbed/README.md
 
+# AStyle backups
+*.orig
+
