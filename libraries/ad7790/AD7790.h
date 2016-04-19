@@ -53,6 +53,13 @@
 /**
  * @brief Analog Devices AD7790 SPI 16-bit Buffered Sigma-Delta ADC
  */
+
+/**
+ * Comment this line if you want to turn off the debug mode.
+ * The debug mode will send a message if an exception occurs within AD7790 driver
+ */
+#define AD7790_DEBUG_MODE
+
 class AD7790
 {
 public:
@@ -63,33 +70,105 @@ public:
         MODE_REG,              ///< Mode register
         FILTER_REG,            ///< Filter Register
         DATA_REG               ///< Data register
-    } AD7790Registers_t;
+    } AD7790Register_t;
 
     /// AD7790 channel configuration
     typedef enum {
-        DIFFERENTIAL, ///< AIN(+)-AIN(-)
+        DIFFERENTIAL = 0, ///< AIN(+)-AIN(-)
         RESERVED,     ///< reserved
         SHORT,        ///< AIN(-)-AIN(-)
         VDDMONITOR    ///< Monitor VDD
     } AD7790Channel_t;
 
-    AD7790(PinName CS = SPI_CS, PinName MOSI = SPI_MOSI, PinName MISO = SPI_MISO, PinName SCK = SPI_SCK);
+    typedef enum {
+        CONTINOUS_CONVERSION_MODE = 0,
+        SINGLE_CONVERSION_MODE = 0x80,
+        SHUTDOWN_MODE = 0xC0
+    } AD7790Mode_t;
+
+    typedef enum    {
+        MD1 = 0x80, ///< Mode Select Bit 1
+        MD0 = 0x40, ///< Mode Select Bit 0
+        G1 = 0x20,  ///< Range bit 1
+        G0 = 0x10,  ///< Range bit 0
+        BO = 0x08,  ///< Burnout Current Enable bit
+        BUF = 0x02, ///< Buffered mode bit
+    } ModeRegisterBits_t;
+
+    typedef enum {
+        CLKDIV1 = 0x40, ///< Clock divider bit 1
+        CLKDIV0 = 0x20, ///< Clock divider bit 0
+        FS2 = 0x04, ///< Update rate bit 2
+        FS1 = 0x02, ///< Update rate bit 1
+        FS0 = 0x01, ///< Update rate bit 0
+    } FilterRegisterBits_t;
+
+    typedef enum    {
+        RANGE_VREF = 0,
+        RANGE_VREF_DIV_2,
+        RANGE_VREF_DIV_4,
+        RANGE_VREF_DIV_8,
+    } AnalogInputRange_t;
+
+    /** SPI configuration & constructor */
+    AD7790( float reference_voltage, PinName CS = SPI_CS, PinName MOSI = SPI_MOSI, PinName MISO = SPI_MISO, PinName SCK = SPI_SCK);
     void frequency(int hz);
+
+    /** Low level SPI bus comm methods */
     void reset(void);
-    void write_reg(AD7790Registers_t regAddress, uint8_t regValue);
-    uint16_t write_spi(uint16_t data);
-    uint16_t read_reg (AD7790Registers_t regAddress);
-    uint16_t read_data(void);
+
+    /** Register access methods*/
+    void set_channel(AD7790Channel_t channel);
+    void set_conversion_mode(AD7790Mode_t mode);
+    uint16_t read_data_reg();
+    uint8_t read_status_reg(void);
+    void write_filter_reg(uint8_t regVal);
+    uint8_t read_filter_reg(void);
+    void write_mode_reg(uint8_t regVal);
+    uint8_t read_mode_reg(void);
+    void  set_range(AnalogInputRange_t range);
+    AnalogInputRange_t get_range(void);
+
+    /** Reference voltage methods */
+    void  set_reference_voltage(float ref);
+    float get_reference_voltage(void);
+
+    /** Voltage read methods */
+    float read_voltage(void);
+    float data_to_voltage(uint16_t data);
+    uint16_t voltage_to_data(float voltage);
+
+    /** AnalogIn API */
+    float read(void);
+    uint16_t read_u16(void);
+
+#ifdef MBED_OPERATORS
+    operator float();
+#endif
 
     SPI ad7790;    ///< SPI instance of the AD7790
     DigitalOut cs; ///< DigitalOut instance for the chipselect of the AD7790
 
 private:
+    DigitalIn miso;
+    float _vref;
+    uint8_t _PGA_gain;
+    bool _continous_conversion;
+    AD7790Channel_t _channel;
 
-    const static int _RESET = 0xFF;
-    const static int _DUMMY_BYTE = 0xAA;
-    const static int _READ_FLAG = 0x0800;
-    const static int _DATA_READ    = 0x38;             // Read from the Data Register
+    void write_reg(AD7790Register_t regAddress, uint8_t regValue);
+    uint16_t write_spi(uint16_t data);
+    uint16_t read_reg (AD7790Register_t regAddress);
+
+    const static uint16_t _SINGLE_CONVERSION_TIMEOUT = 0xFFFF; // in 10us = 100ms
+    const static uint16_t _CONTINOUS_CONVERSION_TIMEOUT = 0xFFFF;
+    const static uint16_t _RESOLUTION = 0xFFFF;
+    const static uint8_t _RESET = 0xFF;
+    const static uint8_t _DUMMY_BYTE = 0xFF;
+    const static uint16_t _READ_FLAG = 0x0800;
+    const static uint8_t _DATA_READ    = 0x38;             // Read from the Data Register
+    const static uint8_t _DELAY_TIMING = 0x02;
+    const static uint8_t _SPI_MODE = 3;
 };
 
 #endif

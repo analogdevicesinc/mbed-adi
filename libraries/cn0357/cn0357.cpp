@@ -60,8 +60,9 @@
  */
 CN0357::CN0357(PinName CSAD7790, PinName CSAD5270, PinName MOSI, PinName MISO,
                PinName SCK) :
-    ad7790(CSAD7790, MOSI, MISO, SCK), ad5270(CSAD5270, 20000.0, MOSI, MISO, SCK) ,
-    _sensor_sensitivity(0), _sensor_range(0), _RDACvalue(0)
+    _vref(1.2), _sensor_sensitivity(0), _sensor_range(0), _RDACvalue(0),
+    ad7790(_vref, CSAD7790, MOSI, MISO, SCK), ad5270(CSAD5270, 20000.0, MOSI, MISO, SCK)
+
 {
 }
 
@@ -79,11 +80,11 @@ void CN0357::init(float range, float sensitivity, JumperConfig_t jp, uint8_t mod
     ad7790.frequency(500000);
 
     float resistance = set_sensor_parameters(range, sensitivity);
-    _rdac_init(resistance);
+
     if(jp == INTERNAL_AD7790) {
         _AD7790_init(mode_val, filter_val);
     }
-
+    _rdac_init(resistance);
 }
 
 /**
@@ -108,10 +109,13 @@ void CN0357::_rdac_init(float resistance)
 void CN0357::_AD7790_init(uint8_t mode_val, uint8_t filter_val)
 {
     ad7790.reset();
-    // wait_ms(1000);
-    ad7790.write_reg(AD7790::MODE_REG, mode_val);
-    ad7790.write_reg(AD7790::FILTER_REG, filter_val);
+    wait_ms(50);
 
+    ad7790.write_mode_reg(mode_val);
+    wait_us(2);
+
+    ad7790.write_filter_reg(filter_val);
+    wait_ms(50);
 }
 
 /**
@@ -120,7 +124,7 @@ void CN0357::_AD7790_init(uint8_t mode_val, uint8_t filter_val)
  */
 uint8_t CN0357::read_adc_status(void)
 {
-    return ad7790.read_reg(AD7790::STATUS_REG);
+    return ad7790.read_status_reg();
 }
 
 /**
@@ -129,7 +133,7 @@ uint8_t CN0357::read_adc_status(void)
  */
 float CN0357::read_sensor_voltage(void)
 {
-    return data_to_voltage(read_sensor());
+    return ad7790.read_voltage();
 }
 
 /**
@@ -138,7 +142,7 @@ float CN0357::read_sensor_voltage(void)
  */
 uint16_t CN0357::read_sensor(void)
 {
-    return ad7790.read_data();
+    return ad7790.read_u16();
 }
 
 /**
@@ -147,7 +151,7 @@ uint16_t CN0357::read_sensor(void)
  */
 float CN0357::read_ppm()
 {
-    return calc_ppm(read_sensor_voltage()); /* Convert voltage to Gas concentration*/
+    return calc_ppm(ad7790.read_voltage()); /* Convert voltage to Gas concentration*/
 }
 
 /**
@@ -169,7 +173,7 @@ float CN0357::calc_ppm(float adcVoltage)
  */
 float CN0357::data_to_voltage(uint16_t data)
 {
-    return ((static_cast<float>(data) / pow(2, 15)) - 1) * 1.2; /* Bipolar voltage computation from ADC code */
+    return ad7790.data_to_voltage(data);
 }
 
 /**
@@ -179,12 +183,7 @@ float CN0357::data_to_voltage(uint16_t data)
  */
 void CN0357::set_RDAC_value(float resistance)
 {
-    // Compute for the RDAC code nearest to the required feedback resistance
-    uint16_t RDAC_val = (resistance / 20000.0) * 1024.0;
-    // Compute for the constants used in voltage and PPM conversion computation
-    _RDACvalue = ((static_cast<float> (RDAC_val) * 20000.0) / 1024.0);
-    ad5270.write_cmd(AD5270::WRITE_CTRL_REG, 0x02); // RDAC register write protect -  allow update of wiper position through digital interface
-    ad5270.write_cmd(AD5270::WRITE_RDAC, RDAC_val); // write data to the RDAC register
+    _RDACvalue = ad5270.write_RDAC(resistance);
 }
 
 /**
@@ -208,7 +207,7 @@ float CN0357::set_sensor_parameters(float range, float sensitivity)
 {
     _sensor_sensitivity = static_cast<float>(sensitivity);
     _sensor_range = range;
-    return (1.2 / (static_cast<float>(_sensor_range * _sensor_sensitivity)));
+    return (_vref / (static_cast<float>(_sensor_range * _sensor_sensitivity)));
 }
 
 /**

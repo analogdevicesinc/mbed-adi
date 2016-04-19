@@ -60,8 +60,8 @@
 AD5270::AD5270(PinName CS, float max_resistance, PinName MOSI, PinName MISO, PinName SCK):
     ad5270(MOSI, MISO, SCK), cs(CS), _max_resistance(max_resistance)
 {
-    ad5270.format(8, 3);
     cs = true;
+    ad5270.format(8, _SPI_MODE);
 }
 
 /**
@@ -75,12 +75,37 @@ uint16_t AD5270::calc_RDAC(float resistance)
 }
 
 /**
+ * @brief sets a new value for the RDAC
+ * @param resistance new value for the resistance
+ * @return actual value of the resistance in the RDAC
+ */
+float AD5270::write_RDAC(float resistance)
+{
+    // Compute for the RDAC code nearest to the required feedback resistance
+    uint16_t RDAC_val = calc_RDAC(resistance);
+    float RDAC_Value = ((static_cast<float> (RDAC_val) * _max_resistance) / 1024.0); // inverse operation to get actual resistance in the RDAC
+    write_wiper_reg(RDAC_val);
+    return RDAC_Value;
+}
+
+/**
+ * Reads the RDAC register
+ * @return RDAC resistor value
+ */
+float AD5270::read_RDAC()
+{
+    uint16_t RDAC_val = read_wiper_reg();
+    return ((static_cast<float> (RDAC_val) * _max_resistance) / 1024.0);
+}
+
+/**
  *	@brief Puts the AD5270 SDO line in to Hi-Z mode
  *	@return none
  */
 void AD5270::set_SDO_HiZ(void)
 {
     write_reg(HI_Z_Cmd);
+    wait_us(2);
     write_reg(NO_OP_cmd);
 }
 
@@ -108,6 +133,33 @@ uint16_t AD5270::write_cmd(uint8_t command, uint16_t data)
 }
 
 /**
+ *  Enables the 50TP memory programming
+ */
+void AD5270::enable_50TP_programming()
+{
+    uint8_t regVal = read_ctrl_reg();
+    write_cmd(WRITE_CTRL_REG, regVal | PROGRAM_50TP_ENABLE); // RDAC register write protect -  allow update of wiper position through digital interface
+}
+
+/**
+ *  Stores current RDAC content to the 50TP memory
+ */
+void AD5270::store_50TP()
+{
+    write_cmd(STORE_50TP);
+    wait_ms(_WRITE_OPERATION_50TP_TIMEOUT);
+}
+
+/**
+ * Disables the 50TP memory programming
+ */
+void AD5270::disable_50TP_programming()
+{
+    uint8_t regVal = read_ctrl_reg();
+    write_cmd(WRITE_CTRL_REG, regVal & (~PROGRAM_50TP_ENABLE));
+}
+
+/**
  * @brief Writes 16bit data to the AD5270 SPI interface
  * @param data to be written
  * @return data returned by the AD5270
@@ -117,6 +169,7 @@ uint16_t AD5270::write_reg(uint16_t data)
     uint16_t result;
     uint8_t upper_byte = (data >> 8) & 0xFF;
     uint8_t lower_byte =  data & 0xFF;
+    ad5270.format(8, _SPI_MODE);
     cs = false;
     result  = ((ad5270.write(upper_byte)) << 8);
     result |=   ad5270.write(lower_byte);
@@ -132,3 +185,99 @@ float AD5270::get_max_resistance()
 {
     return _max_resistance;
 }
+
+/**
+ * Writes the wiper register. This includes reading the control register,
+ * setting write protect off, writing the wiper, and reverting the settings
+ * to the control reg.
+ * @param data to be written
+ */
+void AD5270::write_wiper_reg(uint16_t data)
+{
+    uint8_t reg_val = read_ctrl_reg();
+    write_cmd(WRITE_CTRL_REG, reg_val | RDAC_WRITE_PROTECT); // RDAC register write protect -  allow update of wiper position through digital interface
+    write_cmd(WRITE_RDAC, data); // write data to the RDAC register
+    write_cmd(WRITE_CTRL_REG, reg_val); // RDAC register write protect -  allow update of wiper position through digital interface
+}
+
+/**
+ * Reads the wiper register value
+ * @return value of the wiper register
+ */
+uint16_t AD5270::read_wiper_reg(void)
+{
+    uint16_t RDAC_val;
+    write_cmd(READ_RDAC);
+    wait_us(_REG_OPERATION_TIMEOUT);
+    RDAC_val = write_cmd(NO_OP);
+    return RDAC_val;
+}
+
+/**
+ * Reads the last programmed value of the 50TP memory
+ * @return last programmed value
+ */
+uint8_t AD5270::read_50TP_last_address(void)
+{
+    uint8_t ret_val;
+    write_cmd(READ_50TP_ADDRESS);
+    wait_us(_MEMORY_OPERATION_TIMEOUT);
+    ret_val = write_cmd(NO_OP);
+    return ret_val;
+}
+
+/**
+ * Reads the content of a 50TP memory address
+ * @param address memory to be read
+ * @return value stored in the 50TP address
+ */
+uint16_t AD5270::read_50TP_memory(uint8_t address)
+{
+    uint16_t ret_val;
+    write_cmd(READ_50TP_CONTENTS, address);
+    wait_us(_MEMORY_OPERATION_TIMEOUT);
+    ret_val = write_cmd(NO_OP);
+    return ret_val;
+}
+
+/**
+ * Writes the control register
+ * @param data to be written
+ */
+void AD5270::write_ctrl_reg(uint8_t data)
+{
+    write_cmd(WRITE_CTRL_REG, data);
+}
+
+/**
+ * Reads the control register
+ * @return value of the control register
+ */
+uint8_t AD5270::read_ctrl_reg(void)
+{
+    uint8_t ret_val;
+    write_cmd(READ_CTRL_REG);
+    wait_us(_REG_OPERATION_TIMEOUT);
+    ret_val = write_cmd(NO_OP);
+    return ret_val;
+}
+
+/**
+ * Resets the wiper register value to the data last written in the 50TP
+ */
+void AD5270::reset_RDAC(void)
+{
+    write_cmd(SW_RST);
+}
+
+/**
+ * Changes the device mode, enabled or shutdown
+ * @param mode - new mode of the device
+ */
+void AD5270::change_mode(AD5270Modes_t mode)
+{
+    write_cmd(SW_SHUTDOWN, static_cast<uint8_t>(mode));
+}
+
+
+

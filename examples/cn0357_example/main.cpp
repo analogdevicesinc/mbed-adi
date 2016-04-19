@@ -44,7 +44,6 @@
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 ********************************************************************************/
-
 #include "mbed.h"
 #include "cn0357.h"
 
@@ -88,9 +87,9 @@ Serial pc(USBTX, USBRX); ///< Serial interface to the pc
  @param fdata2   - Gas Concentration reading to be displayed
 
  **/
-void display_data(uint16_t ui16Data, float fData1, float fdata2)
+void display_data(uint8_t ui8Status_Reg, uint16_t ui16Data, float fData1, float fdata2)
 {
-
+    pc.printf("\r\nStatus Register value: 0x%x", ui8Status_Reg);
     pc.printf("\r\nADC Data Register Value = %#08x", ui16Data); /** Send valid ADC data register value*/
     pc.printf("\r\nADC Input Voltage input = %f V", fData1); /** Send valid voltage input value */
     pc.printf("\r\nGas Concentration = %f PPM", fdata2); /** Send valid gas concentration value */
@@ -98,35 +97,46 @@ void display_data(uint16_t ui16Data, float fData1, float fdata2)
     pc.printf("\r\n");
 }
 
-
 /**
  * Project entry-point - initializes the CN0357 shield, reads the data when the ADC is ready and outputs the sensor
  * value in PPM
  */
+
+#define SINGLE_CONVERSION
+//#define CONTINOUS_CONVERSION
+
 int main()
 {
     /* Main variables */
-
-
     CN0357 cn0357;
+    uint8_t ui8Status_Reg = 0;
+#ifdef SINGLE_CONVERSION
     cn0357.init(SENSOR_RANGE, SENSOR_SENSITIVITY);
+#elif defined CONTINOUS_CONVERSION
+    cn0357.init(SENSOR_RANGE, SENSOR_SENSITIVITY, CN0357::INTERNAL_AD7790, 0x00, 0x07);
+#else
+#error define SINGLE_CONVERSION or CONTINOUS_CONVERSION, but not both
+#endif
+
 
     /* Infinite loop */
     while (1) {
+        wait_ms(1000);
+#ifdef CONTINOUS_CONVERSION
+        ui8Status_Reg = cn0357.read_adc_status(); //  Read ADC Status Register        //
 
-        uint8_t ui8Status_Reg = cn0357.read_adc_status(); //  Read ADC Status Register
-
-        if (ui8Status_Reg == 0x08) { //  Checks if ADC data is available
+        if (ui8Status_Reg != 0x08) { //  Checks if ADC data is available
+            pc.printf("\r\nStatus Register value: 0x%x", ui8Status_Reg);
+        } else
+#endif
+        {
             uint16_t ui16Adcdata = cn0357.read_sensor();
             float fAdcVoltage    = cn0357.data_to_voltage(ui16Adcdata); //  Convert ADC data to voltage
             float fConcentration = cn0357.calc_ppm(fAdcVoltage); //  Convert voltage to Gas concentration
-            display_data(ui16Adcdata, fAdcVoltage, fConcentration); //  Display data thru UART
-
-            // printf("OneshotRead: %f PPM \r\n", cn0357.readPPM());
+            display_data(ui8Status_Reg, ui16Adcdata, fAdcVoltage, fConcentration); //  Display data thru UART
         }
-
-        wait_ms(1000);
     }
+
 
     /* Infinite loop, never returns. */
 }

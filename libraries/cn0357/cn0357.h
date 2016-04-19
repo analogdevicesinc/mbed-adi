@@ -59,6 +59,15 @@ class CN0357
 {
 public:
 
+private:
+    float _vref;
+    float _sensor_sensitivity;
+    float _sensor_range;
+    float _RDACvalue;
+public:
+    AD7790 ad7790; ///< AD7790 instance - can be used for manual overriding
+    AD5270 ad5270; ///< AD5270 instance - can be used for manual overriding
+
     /// CN0357 shield jumper configuration
     typedef enum {
         INTERNAL_AD7790 = 0, 	///< The shield's AD7790 is used
@@ -75,26 +84,21 @@ public:
     float calc_ppm(float adcVoltage);
     float read_ppm(void);
 
+    void set_vref(float vref);
+    float get_vref(void);
+
     void  set_RDAC_value(float resistor_val);
     float get_RDAC_value(void);
     float set_sensor_parameters(float range, float sensitivity);
     float get_sensor_range(void);
     float get_sensor_sensitivity(void);
 
-
-    AD7790 ad7790; ///< AD7790 instance - can be used for manual overriding
-    AD5270 ad5270; ///< AD5270 instance - can be used for manual overriding
-
 private:
     const static int _RESET = 0xff;
-    const static int _DEFAULT_MODE_VAL = 0x00;
-    const static int _DEFAULT_FILTER_VAL = 0x07;
-    float _sensor_sensitivity;
-    float _sensor_range;
-    float _RDACvalue;
+    const static int _DEFAULT_MODE_VAL = AD7790::MD1 | AD7790::MD0; // POWERDOWN MODE
+    const static int _DEFAULT_FILTER_VAL = AD7790::FS0 | AD7790::FS1 | AD7790::FS2;
     void _rdac_init(float resistanceValue);
     void _AD7790_init(uint8_t mode_val, uint8_t filter_val);
-
 
 };
 
