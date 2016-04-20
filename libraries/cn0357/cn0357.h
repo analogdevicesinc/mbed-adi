@@ -84,9 +84,6 @@ public:
     float calc_ppm(float adcVoltage);
     float read_ppm(void);
 
-    void set_vref(float vref);
-    float get_vref(void);
-
     void  set_RDAC_value(float resistor_val);
     float get_RDAC_value(void);
     float set_sensor_parameters(float range, float sensitivity);
