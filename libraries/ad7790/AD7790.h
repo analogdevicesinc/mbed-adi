@@ -146,10 +146,9 @@ public:
     operator float();
 #endif
 
+private:
     SPI ad7790;    ///< SPI instance of the AD7790
     DigitalOut cs; ///< DigitalOut instance for the chipselect of the AD7790
-
-private:
     DigitalIn miso;
     float _vref;
     uint8_t _PGA_gain;
