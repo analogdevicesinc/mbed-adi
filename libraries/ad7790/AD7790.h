@@ -51,15 +51,15 @@
 #include "mbed.h"
 
 /**
- * @brief Analog Devices AD7790 SPI 16-bit Buffered Sigma-Delta ADC
- */
-
-/**
  * Comment this line if you want to turn off the debug mode.
  * The debug mode will send a message if an exception occurs within AD7790 driver
  */
+
 #define AD7790_DEBUG_MODE
 
+/**
+ * @brief Analog Devices AD7790 SPI 16-bit Buffered Sigma-Delta ADC
+ */
 class AD7790
 {
 public:
