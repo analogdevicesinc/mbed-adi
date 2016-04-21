@@ -54,3 +54,5 @@ mbed/*
 # AStyle backups
 *.orig
 
+# Mercurial repo
+.hg*
