@@ -46,7 +46,7 @@
 
 #ifndef AD5270_DIAG_H_
 #define AD5270_DIAG_H_
-#include "ad5270.h"
+#include "AD5270.h"
 
 class AD5270_Diag
 {

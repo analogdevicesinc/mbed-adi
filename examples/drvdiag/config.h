@@ -52,17 +52,17 @@
 
 #ifdef AD7790_PRESENT
 #include "AD7790.h"
-#include "ad7790_diag.h"
+#include "AD7790_diag.h"
 #endif
 
 #ifdef AD5270_PRESENT
-#include "ad5270.h"
-#include "ad5270_diag.h"
+#include "AD5270.h"
+#include "AD5270_diag.h"
 #endif
 
 #ifdef CN0357_PRESENT
-#include "cn0357.h"
-#include "CN0357_Diag.h"
+#include "CN0357.h"
+#include "CN0357_diag.h"
 #endif
 
 using namespace std;

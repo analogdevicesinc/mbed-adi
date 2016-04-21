@@ -48,7 +48,7 @@
 #include <stdio.h>
 #include <vector>
 #include <string>
-#include "CN0357_Diag.h"
+#include "CN0357_diag.h"
 
 extern Serial pc;
 extern vector<string> cmdbuffer;

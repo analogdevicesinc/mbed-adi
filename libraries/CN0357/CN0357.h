@@ -1,11 +1,12 @@
 /**
-*   @file     ad7790_diag.cpp
-*   @brief    Source file for the AD7790 wrapper used by the driver diag
+*   @file     cn0357.h
+*   @brief    Header file for CN0357
 *   @author   Analog Devices Inc.
 *
 * For support please go to:
 * Github: https://github.com/analogdevicesinc/mbed-adi
 * Support: https://ez.analog.com/community/linux-device-drivers/microcontroller-no-os-drivers
+* Product: www.analog.com/EVAL-CN0357-ARDZ
 * More: https://wiki.analog.com/resources/tools-software/mbed-drivers-all
 
 ********************************************************************************
@@ -44,85 +45,58 @@
 *
 ********************************************************************************/
 
+#ifndef CN0357_H
+#define CN0357_H
+
 #include "mbed.h"
-#include <stdio.h>
-#include <vector>
-#include <string>
-#include "AD7790_Diag.h"
+#include "AD7790.h"
+#include "AD5270.h"
 
-extern Serial pc;
-extern vector<string> cmdbuffer;
+/**
+ * @brief EVAL-CN0357 toxic gas sensor shield
+ */
+class CN0357
+{
+public:
 
-AD7790_Diag::AD7790_Diag(AD7790& ad) : dut(ad)
-{
+private:
+    float _vref;
+    float _sensor_sensitivity;
+    float _sensor_range;
+    float _RDACvalue;
+public:
+    AD7790 ad7790; ///< AD7790 instance - can be used for manual overriding
+    AD5270 ad5270; ///< AD5270 instance - can be used for manual overriding
 
-}
+    /// CN0357 shield jumper configuration
+    typedef enum {
+        INTERNAL_AD7790 = 0, 	///< The shield's AD7790 is used
+        EXTERNAL_ADC			///< Sensor analog output is routed to A1 pin of the shield
+    } JumperConfig_t;
 
-void AD7790_Diag::init()
-{
+    CN0357(PinName CSAD7790 = D8, PinName CSAD5270 = D6, PinName MOSI = SPI_MOSI, PinName MISO = SPI_MISO, PinName SCK = SPI_SCK);
+    void init(float range, float sensitivity, JumperConfig_t jp = INTERNAL_AD7790, uint8_t mode_val = _DEFAULT_MODE_VAL, uint8_t filter_val = _DEFAULT_FILTER_VAL);
 
-}
-void AD7790_Diag::reset()
-{
-    dut.reset();
-    pc.printf("Reseted AD7790");
-}
+    uint8_t  read_adc_status(void);
+    uint16_t read_sensor(void);
+    float read_sensor_voltage(void);
+    float data_to_voltage(uint16_t data);
+    float calc_ppm(float adcVoltage);
+    float read_ppm(void);
 
-void AD7790_Diag::write_mode()
-{
-    uint8_t regVal = strtol(cmdbuffer[1].c_str(), NULL, 16);
-    dut.write_mode_reg(regVal);
-    pc.printf("Wrote mode");
-}
-void AD7790_Diag::read_mode()
-{
-    pc.printf("Mode reg: %x ", dut.read_mode_reg());
-}
+    void  set_RDAC_value(float resistor_val);
+    float get_RDAC_value(void);
+    float set_sensor_parameters(float range, float sensitivity);
+    float get_sensor_range(void);
+    float get_sensor_sensitivity(void);
 
-void AD7790_Diag::write_filter()
-{
-    uint8_t regVal = strtol(cmdbuffer[1].c_str(), NULL, 16);
-    dut.write_filter_reg(regVal);
-    pc.printf("Wrote filter");
-}
-void AD7790_Diag::read_filter()
-{
-    pc.printf("Returned: %x ", dut.read_filter_reg());
-}
-void AD7790_Diag::read_data()
-{
-    pc.printf("Data reg: %x ", dut.read_data_reg());
-}
+private:
+    const static int _RESET = 0xff;
+    const static int _DEFAULT_MODE_VAL = AD7790::MD1 | AD7790::MD0; // POWERDOWN MODE
+    const static int _DEFAULT_FILTER_VAL = AD7790::FS0 | AD7790::FS1 | AD7790::FS2;
+    void _rdac_init(float resistanceValue);
+    void _AD7790_init(uint8_t mode_val, uint8_t filter_val);
 
-void AD7790_Diag::read_status()
-{
-    pc.printf("Status reg: %x ", dut.read_status_reg());
-}
+};
 
-void AD7790_Diag::read_u16()
-{
-    pc.printf("Data reg: %x ", dut.read_u16());
-}
-void AD7790_Diag::read_voltage()
-{
-    pc.printf("Voltage: %f ", dut.read_voltage());
-}
-void AD7790_Diag::set_continous_mode()
-{
-    uint8_t regVal = strtol(cmdbuffer[1].c_str(), NULL, 16);
-    dut.set_conversion_mode(static_cast<AD7790::AD7790Mode_t>(regVal));
-    pc.printf("Mode set to %d", regVal);
-}
-void AD7790_Diag::set_reference_voltage()
-{
-    float ref = strtof(cmdbuffer[1].c_str(), NULL);
-    dut.set_reference_voltage(ref);
-    pc.printf("Reference Voltage set to %f", ref);
-}
-
-void AD7790_Diag::set_channel()
-{
-    uint8_t regVal = strtol(cmdbuffer[1].c_str(), NULL, 16);
-    dut.set_channel(static_cast<AD7790::AD7790Channel_t>(regVal));
-    pc.printf("Mode set to %d", regVal);
-}
+#endif // CN0357_H

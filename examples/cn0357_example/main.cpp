@@ -45,7 +45,7 @@
 *
 ********************************************************************************/
 #include "mbed.h"
-#include "cn0357.h"
+#include "CN0357.h"
 
 /** @mainpage
  * CN0357 single-supply, low noise, portable gas detector circuit using an

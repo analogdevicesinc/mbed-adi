@@ -48,7 +48,7 @@
 #include "mbed.h"
 #include "AD7790.h"
 #include "AD5270.h"
-#include "cn0357.h"
+#include "CN0357.h"
 
 /**
  * @brief CN0357 constructor

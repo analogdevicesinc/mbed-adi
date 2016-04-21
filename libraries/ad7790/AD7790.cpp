@@ -47,7 +47,7 @@
 
 #include <stdint.h>
 #include "mbed.h"
-#include "ad7790.h"
+#include "AD7790.h"
 
 /**
  * @brief AD7790 constructor, sets CS pin and SPI format
