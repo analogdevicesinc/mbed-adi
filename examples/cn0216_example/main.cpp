@@ -1,12 +1,12 @@
-
 /**
-*   @file     config.h
-*   @brief    Config file for driver diag tool
+*   @file     main.cpp
+*   @brief    Main file for the CN0357-example project
 *   @author   Analog Devices Inc.
 *
 * For support please go to:
 * Github: https://github.com/analogdevicesinc/mbed-adi
 * Support: https://ez.analog.com/community/linux-device-drivers/microcontroller-no-os-drivers
+* Product: www.analog.com/EVAL-CN0357-ARDZ
 * More: https://wiki.analog.com/resources/tools-software/mbed-drivers-all
 
 ********************************************************************************
@@ -44,73 +44,75 @@
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 ********************************************************************************/
-
-#define AD7791_PRESENT
-#define CN0216_PRESENT
-//#define AD7790_PRESENT
-//#define AD5270_PRESENT
-//#define CN0357_PRESENT
-#define SPI_LOW_LEVEL
-
-#ifdef AD7791_PRESENT
-#include "AD7791.h"
-#include "ad7791_diag.h"
-#endif
-
-#ifdef CN0216_PRESENT
+#include "mbed.h"
 #include "CN0216.h"
-#include "cn0216_diag.h"
+
+const float CAL_WEIGHT = (150.0);
+
+Serial pc(USBTX, USBRX); ///< Serial interface to the pc
+
+void flush_serial_buffer(void)
+{
+	while (pc.readable()) pc.getc();
+	return;
+}
+
+void display_data(uint32_t data, float weight)
+{
+    pc.printf("\r\nADC Input Voltage input = %f V", data);           /* Send valid voltage input value */
+    pc.printf("\r\nSensor Input Weight = %f grams", weight);         /* Send valid grams value */
+    pc.printf("\r\n");
+}
+
+/**
+ * Project entry-point - initializes the CN0357 shield, reads the data when the ADC is ready and outputs the sensor
+ * value in PPM
+ */
+
+//#define SINGLE_CONVERSION
+#define CONTINOUS_CONVERSION
+
+int main()
+{
+    /* Main variables */
+    CN0216 cn0216;    
+#ifdef SINGLE_CONVERSION
+    cn0216.init(CAL_WEIGHT);
+#elif defined CONTINOUS_CONVERSION
+    cn0216.init(CAL_WEIGHT, 0x00, 0x07);
+#else
+#error define SINGLE_CONVERSION or CONTINOUS_CONVERSION, but not both
 #endif
+    /* Calibration sequence */
+    
+    pc.printf("\r\n Calibrating zero scale. Remove all weights from scale. Press any key to begin ..");
+    while(!pc.readable());
+    flush_serial_buffer();
+    pc.printf("\r\n Calibrating . . . ");
+    cn0216.calibrate(CN0216::ZERO_SCALE_CALIBRATION);
+    pc.printf("done ! ");
 
-#ifdef AD7790_PRESENT
-#include "AD7790.h"
-#include "ad7790_diag.h"
-#endif
+    pc.printf("\r\n Calibrating full scale. Put calibration weight on scale. Press any key to begin ..");
+    while(!pc.readable());
+    flush_serial_buffer();
+    pc.printf("\r\n Calibrating . . . ");
+    cn0216.calibrate(CN0216::FULL_SCALE_CALIBRATION);
+    pc.printf("done ! ");
 
-#ifdef AD5270_PRESENT
-#include "AD5270.h"
-#include "ad5270_diag.h"
-#endif
+    pc.printf("\r\n Calibration successful ");
+    cn0216.calibrate(CN0216::COMPUTE_GRAM_PER_BIT);
 
-#ifdef CN0357_PRESENT
-#include "CN0357.h"
-#include "cn0357_diag.h"
-#endif
-
-using namespace std;
-//------------------------------------
-// Hyperterminal configuration
-// 9600 bauds, 8-bit data, no parity
-//------------------------------------
-
-#ifdef SPI_LOW_LEVEL
-DigitalOut CSA_pin(D8); // cs adc
-DigitalOut CSR_pin(D6); // cs rdac
-SPI spibus(SPI_MOSI, SPI_MISO, SPI_SCK);
-#endif
-
-#ifdef AD7791_PRESENT
-AD7791 ad7791(1.2, D8);
-AD7791_Diag ad7791diag(ad7791);
-#endif
-
-#ifdef CN0216_PRESENT
-CN0216 cn0216;
-CN0216_Diag cn0216diag(cn0216);
-#endif
+    /* Infinite loop */
+    while (1) {
+        wait_ms(1000);
+        {
+            uint32_t data = cn0216.read_u32();
+            float weight    = cn0216.compute_weight(data); //  Convert ADC data to voltage            
+            display_data(data, weight); //  Display data thru UART
+        }
+    }
 
 
-#ifdef AD7790_PRESENT
-AD7790 ad7790(1.2, D8);
-AD7790_Diag ad7790diag(ad7790);
-#endif
+    /* Infinite loop, never returns. */
+}
 
-#ifdef AD5270_PRESENT
-AD5270 ad5270(D6, 20000);
-AD5270_Diag ad5270diag(ad5270);
-#endif
-
-#ifdef  CN0357_PRESENT
-CN0357 cn0357;
-CN0357_Diag cn0357diag(cn0357);
-#endif
