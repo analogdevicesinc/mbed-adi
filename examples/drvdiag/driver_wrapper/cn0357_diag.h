@@ -63,4 +63,4 @@ private:
 };
 
 
-#endif /* AD5270_DIAG_H_ */
+#endif /* CN0357_DIAG_H_ */

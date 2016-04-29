@@ -83,7 +83,28 @@ const vector<commands> cmdlist = {
 									    pc.printf("writing 0x%x to SPI", spibyte);
 									    pc.printf("\r\nreturned: 0x%x ", spibus.write(spibyte)); }},
 #endif
-		/* #### AD7790 #### */
+
+#ifdef AD7791_PRESENT
+		{"adrst",        0,   [](){ad7791diag.reset();}},
+		{"adwrm",        1,   [](){ad7791diag.write_mode();}},
+		{"adrdm",        0,   [](){ad7791diag.read_mode();}},
+		{"adwrf",        1,   [](){ad7791diag.write_filter();}},
+		{"adrdf",        0,   [](){ad7791diag.read_filter();}},
+		{"adrdd",        0,   [](){ad7791diag.read_data();}},
+		{"adrds",        0,   [](){ad7791diag.read_status();}},
+		{"adread32",     0,   [](){ad7791diag.read();}},
+		{"adread",       0,   [](){ad7791diag.read_u16();}},
+		{"adreadv",      0,   [](){ad7791diag.read_voltage();}},
+		{"adsetc",       1,   [](){ad7791diag.set_continous_mode();}},
+		{"adsetref",     1,   [](){ad7791diag.set_reference_voltage();}},
+		{"adsetch",      1,   [](){ad7791diag.set_channel();}},
+#endif
+
+#ifdef CN0216_PRESENT
+        {"cninit" ,      1,   [](){cn0216diag.init();}},
+        {"cncal"  ,      1,   [](){cn0216diag.calibrate();}},
+        {"cnrdw"  ,      0,   [](){cn0216diag.read_weight();}},
+#endif
 
 #ifdef AD7790_PRESENT
 		{"adrst",        0,   [](){ad7790diag.reset();}},
@@ -180,9 +201,11 @@ void run_command()
 }
 
 int main()
-{
 
+{
+	ad7791.frequency(100000);
     pc.printf("\r\n#### DrvDiag ####\r\n");
+
     while(1) {
         pc.printf("\r\nTX> ");
         read_from_console();

@@ -1,7 +1,6 @@
-
 /**
-*   @file     config.h
-*   @brief    Config file for driver diag tool
+*   @file     ad5270_diag.cpp
+*   @brief    Source file for the AD5270 wrapper used by the driver diag
 *   @author   Analog Devices Inc.
 *
 * For support please go to:
@@ -45,72 +44,100 @@
 *
 ********************************************************************************/
 
-#define AD7791_PRESENT
-#define CN0216_PRESENT
-//#define AD7790_PRESENT
-//#define AD5270_PRESENT
-//#define CN0357_PRESENT
-#define SPI_LOW_LEVEL
-
-#ifdef AD7791_PRESENT
-#include "AD7791.h"
-#include "ad7791_diag.h"
-#endif
-
-#ifdef CN0216_PRESENT
-#include "CN0216.h"
-#include "cn0216_diag.h"
-#endif
-
-#ifdef AD7790_PRESENT
-#include "AD7790.h"
-#include "ad7790_diag.h"
-#endif
-
-#ifdef AD5270_PRESENT
-#include "AD5270.h"
 #include "ad5270_diag.h"
-#endif
 
-#ifdef CN0357_PRESENT
-#include "CN0357.h"
-#include "cn0357_diag.h"
-#endif
+#include "mbed.h"
+#include <stdio.h>
+#include <vector>
+#include <string>
 
-using namespace std;
-//------------------------------------
-// Hyperterminal configuration
-// 9600 bauds, 8-bit data, no parity
-//------------------------------------
+extern Serial pc;
+extern vector<string> cmdbuffer;
 
-#ifdef SPI_LOW_LEVEL
-DigitalOut CSA_pin(D8); // cs adc
-DigitalOut CSR_pin(D6); // cs rdac
-SPI spibus(SPI_MOSI, SPI_MISO, SPI_SCK);
-#endif
+AD5270_Diag::AD5270_Diag(AD5270& ad) : dut(ad)
+{
 
-#ifdef AD7791_PRESENT
-AD7791 ad7791(1.2, D8);
-AD7791_Diag ad7791diag(ad7791);
-#endif
+}
+void AD5270_Diag::enable_50TP_programming()
+{
+    dut.enable_50TP_programming();
+    pc.printf("Enabled 50TP prog");
 
-#ifdef CN0216_PRESENT
-CN0216 cn0216;
-CN0216_Diag cn0216diag(cn0216);
-#endif
+}
+void AD5270_Diag::store_50TP()
+{
+    dut.store_50TP();
+    pc.printf("50TP stored");
+}
+void AD5270_Diag::disable_50TP_programming()
+{
+    dut.disable_50TP_programming();
+    pc.printf("Disabled 50TP prog");
+}
 
+void AD5270_Diag::write_RDAC()
+{
+    float res = strtof(cmdbuffer[1].c_str(), NULL);
+    dut.write_RDAC(res);
+    pc.printf("Wrote %f", res);
+}
+void AD5270_Diag::read_RDAC()
+{
+    pc.printf("Read %f", dut.read_RDAC());
+}
+void AD5270_Diag::write_cmd()
+{
+    uint8_t reg = strtol(cmdbuffer[1].c_str(), NULL, 16);
+    uint8_t regVal = strtol(cmdbuffer[2].c_str(), NULL, 16);
+    pc.printf("Returned %x: ", dut.write_cmd(reg, regVal));
+}
 
-#ifdef AD7790_PRESENT
-AD7790 ad7790(1.2, D8);
-AD7790_Diag ad7790diag(ad7790);
-#endif
+void AD5270_Diag::set_HiZ()
+{
+    pc.printf("SDO set to HiZ");
+    dut.set_SDO_HiZ();
+}
 
-#ifdef AD5270_PRESENT
-AD5270 ad5270(D6, 20000);
-AD5270_Diag ad5270diag(ad5270);
-#endif
+void AD5270_Diag::read_50TP_last_address(void)
+{
+    pc.printf("Returned %x:", dut.read_50TP_last_address());
+}
+void AD5270_Diag::read_50TP_memory(void)
+{
+    uint8_t reg = strtol(cmdbuffer[1].c_str(), NULL, 16);
+    pc.printf("Returned %x", dut.read_50TP_memory(reg));
+}
 
-#ifdef  CN0357_PRESENT
-CN0357 cn0357;
-CN0357_Diag cn0357diag(cn0357);
-#endif
+void AD5270_Diag::write_ctrl_reg(void)
+{
+    uint8_t val = strtol(cmdbuffer[1].c_str(), NULL, 16);
+    dut.write_ctrl_reg(val);
+    pc.printf("Wrote %x to ctrl_reg", val );
+}
+void AD5270_Diag::read_ctrl_reg(void)
+{
+    pc.printf("Read %x from ctrl_reg", dut.read_ctrl_reg());
+}
+
+void AD5270_Diag::reset_RDAC(void)
+{
+    dut.reset_RDAC();
+    pc.printf("Resetted rdac");
+}
+void AD5270_Diag::change_mode(void)
+{
+    uint8_t val = strtol(cmdbuffer[1].c_str(), NULL, 16);
+    dut.change_mode(static_cast<AD5270::AD5270Modes_t>(val));
+    pc.printf("Changed mode to %x", val);
+}
+
+void AD5270_Diag::write_wiper_reg(void)
+{
+    uint16_t val = strtol(cmdbuffer[1].c_str(), NULL, 16);
+    dut.write_wiper_reg(val);
+    pc.printf("Wrote %x to wiper", val);
+}
+void AD5270_Diag::read_wiper_reg(void)
+{
+    pc.printf("Read %x from wiper", dut.read_wiper_reg());
+}

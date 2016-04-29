@@ -1,12 +1,12 @@
 /**
-*   @file     AD7790.cpp
-*   @brief    Source file for AD7790 ADC
+*   @file     AD7791.cpp
+*   @brief    Source file for AD7791 ADC
 *   @author   Analog Devices Inc.
 *
 * For support please go to:
 * Github: https://github.com/analogdevicesinc/mbed-adi
 * Support: https://ez.analog.com/community/linux-device-drivers/microcontroller-no-os-drivers
-* Product: http://www.analog.com/ad7790
+* Product: http://www.analog.com/ad7791
 * More: https://wiki.analog.com/resources/tools-software/mbed-drivers-all
 
 ********************************************************************************
@@ -47,51 +47,51 @@
 
 #include <stdint.h>
 #include "mbed.h"
-#include "AD7790.h"
+#include "AD7791.h"
 
 /**
- * @brief AD7790 constructor, sets CS pin and SPI format
- * @param CS - (optional)chip select of the AD7790
+ * @brief AD7791 constructor, sets CS pin and SPI format
+ * @param CS - (optional)chip select of the AD7791
  * @param MOSI - (optional)pin of the SPI interface
  * @param MISO - (optional)pin of the SPI interface
  * @param SCK  - (optional)pin of the SPI interface
  */
-AD7790::AD7790(float reference_voltage,
+AD7791::AD7791(float reference_voltage,
                PinName CS,
                PinName MOSI,
                PinName MISO,
                PinName SCK) :
-			   miso(MISO), ad7790(MOSI, MISO, SCK), cs(CS), _vref(reference_voltage), _PGA_gain(1)
+			   miso(MISO), ad7791(MOSI, MISO, SCK), cs(CS),  _vref(reference_voltage)
 {
     cs = true; // cs is active low
-    ad7790.format(8, _SPI_MODE);
+    ad7791.format(8, _SPI_MODE);
     _continous_conversion = true;
     _channel = DIFFERENTIAL;
 }
 
 /**
- * @brief Set AD7790 SPI frequency
+ * @brief Set AD7791 SPI frequency
  * @param hz - SPI bus frequency in hz
  * @return none
  */
-void AD7790::frequency(int hz)
+void AD7791::frequency(int hz)
 {
-    ad7790.frequency(hz);
+    ad7791.frequency(hz);
 }
 
 /**
- * @brief Resets the AD7790
+ * @brief Resets the AD7791
  * @return none
  */
-void AD7790::reset()
+void AD7791::reset()
 {
-    ad7790.format(8, _SPI_MODE);
+    ad7791.format(8, _SPI_MODE);
     cs = false;
     wait_us(_DELAY_TIMING);
-    ad7790.write(_RESET);
-    ad7790.write(_RESET);
-    ad7790.write(_RESET);
-    ad7790.write(_RESET);
+    ad7791.write(_RESET);
+    ad7791.write(_RESET);
+    ad7791.write(_RESET);
+    ad7791.write(_RESET);
     wait_us(_DELAY_TIMING);
     cs = true;
     _continous_conversion = true;
@@ -102,7 +102,7 @@ void AD7790::reset()
  * written in reg_val
  * @param reg_val
  */
-void AD7790::write_mode_reg(uint8_t reg_val)
+void AD7791::write_mode_reg(uint8_t reg_val)
 {
     write_reg(MODE_REG, reg_val);
     uint8_t continous_mode = (reg_val & 0xC0);
@@ -111,15 +111,16 @@ void AD7790::write_mode_reg(uint8_t reg_val)
     } else {
         _continous_conversion = false;
     }
-    uint8_t range = (reg_val & 0x30);
-    _PGA_gain = 1 << (range >> 4);
+/*  uint8_t range = (reg_val & 0x30);
+    _PGA_gain = 1 << (range >> 4);*/
+
 }
 
 /**
  * Reads the mode register and returns its value
  * @return value of the mode register
  */
-uint8_t AD7790::read_mode_reg()
+uint8_t AD7791::read_mode_reg()
 {
     return read_reg(MODE_REG);
 }
@@ -128,7 +129,7 @@ uint8_t AD7790::read_mode_reg()
  * Writes the filter register
  * @param regValue value to be written.
  */
-void AD7790::write_filter_reg(uint8_t reg_val)
+void AD7791::write_filter_reg(uint8_t reg_val)
 {
     write_reg(FILTER_REG, reg_val);
 }
@@ -137,7 +138,7 @@ void AD7790::write_filter_reg(uint8_t reg_val)
  * Reads the filter register and returns its value
  * @return the value of the filter register
  */
-uint8_t AD7790::read_filter_reg()
+uint8_t AD7791::read_filter_reg()
 {
     return read_reg(FILTER_REG);
 }
@@ -146,14 +147,15 @@ uint8_t AD7790::read_filter_reg()
  * Reads the data register and returns its value
  * @return value of the data register
  */
-uint16_t AD7790::read_data_reg()
+uint32_t AD7791::read_data_reg()
 {
-    uint16_t data_result;
-    ad7790.format(8, _SPI_MODE);
+    uint32_t data_result;
+    ad7791.format(8, _SPI_MODE);
     cs = false;
-    ad7790.write(_DATA_READ | (static_cast<uint8_t>(_channel)));
-    data_result  = ((ad7790.write(_DUMMY_BYTE)) << 8);
-    data_result |=  (ad7790.write(_DUMMY_BYTE));
+    ad7791.write(_DATA_READ | (static_cast<uint8_t>(_channel)));
+    data_result  = ((ad7791.write(_DUMMY_BYTE)) << 16);
+    data_result |= ((ad7791.write(_DUMMY_BYTE)) << 8 );
+    data_result |=  (ad7791.write(_DUMMY_BYTE));
     cs = true;
     return data_result;
 }
@@ -162,7 +164,7 @@ uint16_t AD7790::read_data_reg()
  * Reads the status register of the ADC and returns its value
  * @return value of the status reg
  */
-uint8_t AD7790::read_status_reg()
+uint8_t AD7791::read_status_reg()
 {
     return read_reg(STATUS_REG);
 }
@@ -181,7 +183,7 @@ uint8_t AD7790::read_status_reg()
  * true - continous conversion mode enabled
  * false - single conversion mode enabled
  */
-void AD7790::set_conversion_mode(AD7790Mode_t mode)
+void AD7791::set_conversion_mode(AD7791Mode_t mode)
 {
     uint8_t mode_reg_val;
     mode_reg_val = read_mode_reg() & 0x3F;
@@ -205,10 +207,10 @@ void AD7790::set_conversion_mode(AD7790Mode_t mode)
  * @return 16-bit unsigned short representing the current input voltage, normalised to a 16-bit value
  * returns -1 (0xFFFF) along with a debug message if conversion failed.
  */
-uint16_t AD7790::read_u16(void)
+uint32_t AD7791::read_u32(void)
 {
-    uint16_t data_result = 0;
-    ad7790.format(8, _SPI_MODE);
+    uint32_t data_result = 0;
+    ad7791.format(8, _SPI_MODE);
     cs = false;
     uint16_t timeout_cnt = 0;
     if(_continous_conversion == false) {
@@ -218,8 +220,8 @@ uint16_t AD7790::read_u16(void)
 
         cs = false;
         mode_reg = (mode_reg & 0x3F) | MD1; // mask single conversion bits
-        ad7790.write((MODE_REG << 4) | (static_cast<uint8_t>(_channel))); // start single conversion
-        ad7790.write(mode_reg);
+        ad7791.write((MODE_REG << 4) | (static_cast<uint8_t>(_channel))); // start single conversion
+        ad7791.write(mode_reg);
         timeout_cnt = _SINGLE_CONVERSION_TIMEOUT; // starts timeout
     } else {
         timeout_cnt = _CONTINOUS_CONVERSION_TIMEOUT; // starts timeout
@@ -230,27 +232,34 @@ uint16_t AD7790::read_u16(void)
             timeout_cnt--;
         } else {
             cs = true;
-#ifdef AD7790_DEBUG_MODE
-            printf("timeout occurred reading the AD7790. "); // error, MISO line didn't toggle
+#ifdef AD7791_DEBUG_MODE
+            printf("timeout occurred reading the AD7791. "); // error, MISO line didn't toggle
 #endif
             return -1; // ERROR
         }
         wait_us(10);
     }
 
-    ad7790.write(_DATA_READ |  (static_cast<uint8_t>(_channel)));
-    data_result  = ((ad7790.write(_DUMMY_BYTE)) << 8);
-    data_result |=  (ad7790.write(_DUMMY_BYTE));
+    ad7791.write(_DATA_READ | (static_cast<uint8_t>(_channel)));
+    data_result  = ((ad7791.write(_DUMMY_BYTE)) << 16);
+    data_result |= ((ad7791.write(_DUMMY_BYTE)) << 8 );
+    data_result |=  (ad7791.write(_DUMMY_BYTE));
     cs = true;
     return data_result;
 }
 
+uint16_t AD7791::read_u16(void)
+{
+  uint32_t data = read_u32();
+  return static_cast<uint16_t>((data & 0xffff00) >> 8);
+}
+
 /**
- * @brief Reads a register of the AD7790
+ * @brief Reads a register of the AD7791
  * @param  address - address of the register
  * @return value of the register
  */
-uint16_t AD7790::read_reg(AD7790Register_t address)
+uint16_t AD7791::read_reg(AD7791Register_t address)
 {
     uint16_t data = address << 12;
     data |= _DUMMY_BYTE;
@@ -260,13 +269,13 @@ uint16_t AD7790::read_reg(AD7790Register_t address)
 }
 
 /**
- * @brief Writes a register of the AD7790
+ * @brief Writes a register of the AD7791
  * @param address - address of the register
  * @param reg_val - value to be written
  * @return none
  *
  */
-void AD7790::write_reg(AD7790Register_t address, uint8_t reg_val)
+void AD7791::write_reg(AD7791Register_t address, uint8_t reg_val)
 {
     uint16_t spi_data = address << 12;
     spi_data |= reg_val;
@@ -275,42 +284,28 @@ void AD7790::write_reg(AD7790Register_t address, uint8_t reg_val)
 }
 
 /**
- * @brief Writes 16bit data to the AD7790 SPI interface
+ * @brief Writes 16bit data to the AD7791 SPI interface
  * @param reg_val to be written
- * @return data returned by the AD7790
+ * @return data returned by the AD7791
  */
-uint16_t AD7790::write_spi(uint16_t reg_val)
+uint16_t AD7791::write_spi(uint16_t reg_val)
 {
     uint16_t data_result;
     uint8_t upper_byte = (reg_val >> 8) & 0xFF;
     uint8_t lower_byte = reg_val & 0xFF;
-    ad7790.format(8, _SPI_MODE);
+    ad7791.format(8, _SPI_MODE);
     cs = false;
-    data_result  =  (ad7790.write(upper_byte) << 8);
-    data_result |=   ad7790.write(lower_byte);
+    data_result  =  (ad7791.write(upper_byte) << 8);
+    data_result |=   ad7791.write(lower_byte);
     cs = true;
     return data_result;
-}
-
-
-/**
- * Sets the AnalogInputRange to be used by the AD7790
- * @param range AnalogInputRange_t to be used in voltage computations
- */
-void AD7790::set_range(AnalogInputRange_t range)
-{
-
-    uint8_t mode_reg_val;
-    mode_reg_val = read_mode_reg() & 0xCF;
-    mode_reg_val = mode_reg_val | (range << 4);
-    write_mode_reg(mode_reg_val);
 }
 
 /**
  * Sets the reference voltage of the AD7790
  * @param ref reference voltage to be set
  */
-void AD7790::set_reference_voltage(float ref)
+void AD7791::set_reference_voltage(float ref)
 {
     _vref = ref;
 }
@@ -319,7 +314,7 @@ void AD7790::set_reference_voltage(float ref)
  * Gets the reference voltage of the AD7790
  * @return reference voltage
  */
-float AD7790::get_reference_voltage(void)
+float AD7791::get_reference_voltage(void)
 {
     return _vref;
 }
@@ -329,9 +324,9 @@ float AD7790::get_reference_voltage(void)
  * Gain needs to be correctly set using set_gain in order to get accurate results
  * @return voltage of the ADC input
  */
-float AD7790::read_voltage(void)
+float AD7791::read_voltage(void)
 {
-    return data_to_voltage(read_u16());
+    return data_to_voltage(read_u32());
 }
 
 /**
@@ -340,9 +335,9 @@ float AD7790::read_voltage(void)
  * @param data in uint16_t format
  * @return float value of voltage (in V)
  */
-float AD7790::data_to_voltage(uint16_t data)
+float AD7791::data_to_voltage(uint32_t data)
 {
-    return ((data / static_cast<float>(_RESOLUTION / 2)) - 1) * (_vref / _PGA_gain);
+    return ((data / static_cast<float>(_RESOLUTION / 2)) - 1) * (_vref );
 }
 
 /**
@@ -351,16 +346,16 @@ float AD7790::data_to_voltage(uint16_t data)
  * @param voltage to be converted
  * @return data in uint16_t format
  */
-uint16_t AD7790::voltage_to_data(float voltage)
+uint32_t AD7791::voltage_to_data(float voltage)
 {
-    return (((voltage * _PGA_gain / _vref) + 1)   * static_cast<float>(_RESOLUTION / 2));
+    return (((voltage / _vref) + 1)   * static_cast<float>(_RESOLUTION / 2));
 }
 
 /**
  * Sets the conversion channel.
  * @param channel
  */
-void AD7790::set_channel(AD7790Channel_t channel)
+void AD7791::set_channel(AD7791Channel_t channel)
 {
     _channel = channel;
 }
@@ -371,11 +366,11 @@ void AD7790::set_channel(AD7790Channel_t channel)
  *  @returns A floating-point value representing the current input voltage, measured as a percentage
  *  returns 1.0 along with a debug message if the conversion failed
  */
-float AD7790::read(void)
+float AD7791::read(void)
 {
     float percent;
-    uint16_t data;
-    data = read_u16();
+    uint32_t data;
+    data = read_u32();
     percent = (data / static_cast<float>(_RESOLUTION) ); // translate bipolar conversion to [0.0, 1.0] domain
     return percent;
 }
@@ -387,7 +382,7 @@ float AD7790::read(void)
  *  An operator shorthand for read()
  *  The float() operator can be used as a shorthand for read() to simplify common code sequences
  */
-AD7790::operator float()
+AD7791::operator float()
 {
     return read();
 }

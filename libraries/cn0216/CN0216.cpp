@@ -1,12 +1,12 @@
-
 /**
-*   @file     config.h
-*   @brief    Config file for driver diag tool
+*   @file     cn0216.cpp
+*   @brief    Source file for CN0216
 *   @author   Analog Devices Inc.
 *
 * For support please go to:
 * Github: https://github.com/analogdevicesinc/mbed-adi
 * Support: https://ez.analog.com/community/linux-device-drivers/microcontroller-no-os-drivers
+* Product: www.analog.com/EVAL-CN0216-ARDZ
 * More: https://wiki.analog.com/resources/tools-software/mbed-drivers-all
 
 ********************************************************************************
@@ -45,72 +45,86 @@
 *
 ********************************************************************************/
 
-#define AD7791_PRESENT
-#define CN0216_PRESENT
-//#define AD7790_PRESENT
-//#define AD5270_PRESENT
-//#define CN0357_PRESENT
-#define SPI_LOW_LEVEL
-
-#ifdef AD7791_PRESENT
+#include "mbed.h"
 #include "AD7791.h"
-#include "ad7791_diag.h"
-#endif
-
-#ifdef CN0216_PRESENT
 #include "CN0216.h"
-#include "cn0216_diag.h"
-#endif
+extern Serial pc;
 
-#ifdef AD7790_PRESENT
-#include "AD7790.h"
-#include "ad7790_diag.h"
-#endif
+  CN0216::CN0216(PinName CSAD7791, PinName MOSI, PinName MISO, PinName SCK) : ad7791(1.2, CSAD7791, MOSI, MISO, SCK)
+  {
+	_cal_weight = 0;
+    _zero_scale_value = 0;
+    _full_scale_value = 0;
+    _grams_per_bit = 0;
 
-#ifdef AD5270_PRESENT
-#include "AD5270.h"
-#include "ad5270_diag.h"
-#endif
+  }
+  void CN0216::init(float cal_weight, uint8_t mode_val, uint8_t filter_val)
+  {
+    _cal_weight = cal_weight;
+    ad7791.frequency(500000);
+    wait_ms(50);
+    ad7791.reset();
+    wait_ms(50);
+    ad7791.write_mode_reg(mode_val);
+    wait_us(2);
+    ad7791.write_filter_reg(filter_val);
+    wait_ms(50);
+  }
 
-#ifdef CN0357_PRESENT
-#include "CN0357.h"
-#include "cn0357_diag.h"
-#endif
+  void CN0216::calibrate(CalibrationStep_t cal)
+  {
+    uint64_t sum = 0;
+    uint32_t min = 0xFFFFFFFF;
+    uint32_t sample = 0;
+    switch(cal)
+    {
+    case ZERO_SCALE_CALIBRATION:
+    case FULL_SCALE_CALIBRATION:
+      for(int i = 0;i < _NUMBER_OF_SAMPLES;i++)
+      {
+    	  sample = ad7791.read_u32();
+    	  min = (min<sample) ? min : sample;
+    	  sum += ad7791.read_u32();
+		  wait_us(5);
+      }
+      if(cal == ZERO_SCALE_CALIBRATION)
+      {
+    	 // pc.printf("ZERO SCALE VALUE = %x",sum);
+    	  _zero_scale_value = min;
+      }
+      else
+      {
+    	//  pc.printf("FULL SCALE VALUE = %x",sum);
+    	  sum = sum / _NUMBER_OF_SAMPLES;
+    	  _full_scale_value = sum;
+      }
+    break;
 
-using namespace std;
-//------------------------------------
-// Hyperterminal configuration
-// 9600 bauds, 8-bit data, no parity
-//------------------------------------
+    case COMPUTE_GRAM_PER_BIT:
+      _grams_per_bit = _cal_weight / (static_cast<float> (_full_scale_value - _zero_scale_value));  /* Calculate number of grams per LSB */
+     // pc.printf("GRAMS/LSB = %f", _grams_per_bit);
+    break;
+    default:
+    break;
+    }
 
-#ifdef SPI_LOW_LEVEL
-DigitalOut CSA_pin(D8); // cs adc
-DigitalOut CSR_pin(D6); // cs rdac
-SPI spibus(SPI_MOSI, SPI_MISO, SPI_SCK);
-#endif
+  }
 
-#ifdef AD7791_PRESENT
-AD7791 ad7791(1.2, D8);
-AD7791_Diag ad7791diag(ad7791);
-#endif
-
-#ifdef CN0216_PRESENT
-CN0216 cn0216;
-CN0216_Diag cn0216diag(cn0216);
-#endif
-
-
-#ifdef AD7790_PRESENT
-AD7790 ad7790(1.2, D8);
-AD7790_Diag ad7790diag(ad7790);
-#endif
-
-#ifdef AD5270_PRESENT
-AD5270 ad5270(D6, 20000);
-AD5270_Diag ad5270diag(ad5270);
-#endif
-
-#ifdef  CN0357_PRESENT
-CN0357 cn0357;
-CN0357_Diag cn0357diag(cn0357);
-#endif
+  float CN0216::compute_weight(uint32_t data)
+  {
+//	pc.printf("\r\nFULL_SCALE_VALUE = %x\r\nZERO_SCALE_VALUE = %x\r\nDATA READ = %x\r\nGRAMS/LSB = %f\r\n",_full_scale_value,data,_zero_scale_value,_grams_per_bit);
+	if(data<_zero_scale_value)
+		data = _zero_scale_value; // clamp data to 0
+	float weight_in_grams =  (static_cast<float>((data) - _zero_scale_value)) * _grams_per_bit;         /* Calculate weight */
+    return weight_in_grams;
+  }
+  uint32_t CN0216::read_u32()
+  {
+    return ad7791.read_u32();
+  }
+  float CN0216::read_weight()  
+  {
+	uint32_t weight =  read_u32();
+    return compute_weight(weight);
+  }
+  

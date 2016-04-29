@@ -1,7 +1,6 @@
-
 /**
-*   @file     config.h
-*   @brief    Config file for driver diag tool
+*   @file     ad5270_diag.h
+*   @brief    Header file for the AD5270 wrapper used by the driver diag
 *   @author   Analog Devices Inc.
 *
 * For support please go to:
@@ -45,72 +44,38 @@
 *
 ********************************************************************************/
 
-#define AD7791_PRESENT
-#define CN0216_PRESENT
-//#define AD7790_PRESENT
-//#define AD5270_PRESENT
-//#define CN0357_PRESENT
-#define SPI_LOW_LEVEL
-
-#ifdef AD7791_PRESENT
-#include "AD7791.h"
-#include "ad7791_diag.h"
-#endif
-
-#ifdef CN0216_PRESENT
-#include "CN0216.h"
-#include "cn0216_diag.h"
-#endif
-
-#ifdef AD7790_PRESENT
-#include "AD7790.h"
-#include "ad7790_diag.h"
-#endif
-
-#ifdef AD5270_PRESENT
+#ifndef AD5270_DIAG_H_
+#define AD5270_DIAG_H_
 #include "AD5270.h"
-#include "ad5270_diag.h"
-#endif
 
-#ifdef CN0357_PRESENT
-#include "CN0357.h"
-#include "cn0357_diag.h"
-#endif
+class AD5270_Diag
+{
+public:
+    AD5270_Diag(AD5270& ad);
+    void enable_50TP_programming(void);
+    void store_50TP(void);
+    void disable_50TP_programming(void);
 
-using namespace std;
-//------------------------------------
-// Hyperterminal configuration
-// 9600 bauds, 8-bit data, no parity
-//------------------------------------
+    void write_RDAC(void);
+    void read_RDAC(void);
+    void write_cmd(void);
+    void set_HiZ(void);
 
-#ifdef SPI_LOW_LEVEL
-DigitalOut CSA_pin(D8); // cs adc
-DigitalOut CSR_pin(D6); // cs rdac
-SPI spibus(SPI_MOSI, SPI_MISO, SPI_SCK);
-#endif
+    void read_50TP_last_address(void);
+    void read_50TP_memory(void);
 
-#ifdef AD7791_PRESENT
-AD7791 ad7791(1.2, D8);
-AD7791_Diag ad7791diag(ad7791);
-#endif
+    void write_ctrl_reg(void);
+    void read_ctrl_reg(void);
 
-#ifdef CN0216_PRESENT
-CN0216 cn0216;
-CN0216_Diag cn0216diag(cn0216);
-#endif
+    void reset_RDAC(void);
+    void change_mode(void);
+
+    void write_wiper_reg(void);
+    void read_wiper_reg(void);
+
+private:
+    AD5270& dut;
+};
 
 
-#ifdef AD7790_PRESENT
-AD7790 ad7790(1.2, D8);
-AD7790_Diag ad7790diag(ad7790);
-#endif
-
-#ifdef AD5270_PRESENT
-AD5270 ad5270(D6, 20000);
-AD5270_Diag ad5270diag(ad5270);
-#endif
-
-#ifdef  CN0357_PRESENT
-CN0357 cn0357;
-CN0357_Diag cn0357diag(cn0357);
-#endif
+#endif /* AD5270_DIAG_H_ */
