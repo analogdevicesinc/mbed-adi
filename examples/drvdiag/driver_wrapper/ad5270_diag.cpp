@@ -44,12 +44,11 @@
 *
 ********************************************************************************/
 
-#include "ad5270_diag.h"
-
 #include "mbed.h"
 #include <stdio.h>
 #include <vector>
 #include <string>
+#include "AD5270_diag.h"
 
 extern Serial pc;
 extern vector<string> cmdbuffer;
