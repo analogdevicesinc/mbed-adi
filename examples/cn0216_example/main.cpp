@@ -53,8 +53,8 @@ Serial pc(USBTX, USBRX); ///< Serial interface to the pc
 
 void flush_serial_buffer(void)
 {
-	while (pc.readable()) pc.getc();
-	return;
+    while (pc.readable()) pc.getc();
+    return;
 }
 
 void display_data(uint32_t data, float weight)
@@ -75,7 +75,7 @@ void display_data(uint32_t data, float weight)
 int main()
 {
     /* Main variables */
-    CN0216 cn0216;    
+    CN0216 cn0216;
 #ifdef SINGLE_CONVERSION
     cn0216.init(CAL_WEIGHT);
 #elif defined CONTINOUS_CONVERSION
@@ -84,7 +84,7 @@ int main()
 #error define SINGLE_CONVERSION or CONTINOUS_CONVERSION, but not both
 #endif
     /* Calibration sequence */
-    
+
     pc.printf("\r\n Calibrating zero scale. Remove all weights from scale. Press any key to begin ..");
     while(!pc.readable());
     flush_serial_buffer();
@@ -100,14 +100,14 @@ int main()
     pc.printf("done ! ");
 
     pc.printf("\r\n Calibration successful ");
-    cn0216.calibrate(CN0216::COMPUTE_GRAM_PER_BIT);
+    cn0216.calibrate(CN0216::COMPUTE_UNITS_PER_BIT);
 
     /* Infinite loop */
     while (1) {
         wait_ms(1000);
         {
             uint32_t data = cn0216.read_u32();
-            float weight    = cn0216.compute_weight(data); //  Convert ADC data to voltage            
+            float weight    = cn0216.compute_weight(data); //  Convert ADC data to voltage
             display_data(data, weight); //  Display data thru UART
         }
     }

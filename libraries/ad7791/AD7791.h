@@ -104,13 +104,13 @@ public:
         FS0 = 0x01, ///< Update rate bit 0
     } FilterRegisterBits_t;
 
-/*  typedef enum    {
-        RANGE_VREF = 0,
-        RANGE_VREF_DIV_2,
-        RANGE_VREF_DIV_4,
-        RANGE_VREF_DIV_8,
-    } AnalogInputRange_t;
-*/
+    /*  typedef enum    {
+            RANGE_VREF = 0,
+            RANGE_VREF_DIV_2,
+            RANGE_VREF_DIV_4,
+            RANGE_VREF_DIV_8,
+        } AnalogInputRange_t;
+    */
     /** SPI configuration & constructor */
     AD7791( float reference_voltage, PinName CS = SPI_CS, PinName MOSI = SPI_MOSI, PinName MISO = SPI_MISO, PinName SCK = SPI_SCK);
     void frequency(int hz);
@@ -132,7 +132,7 @@ public:
 
     /** Reference voltage methods */
     void  set_reference_voltage(float ref);
-  	float get_reference_voltage(void);
+    float get_reference_voltage(void);
 
     /** Voltage read methods */
     float read_voltage(void);

@@ -61,7 +61,7 @@ AD7790::AD7790(float reference_voltage,
                PinName MOSI,
                PinName MISO,
                PinName SCK) :
-			   miso(MISO), ad7790(MOSI, MISO, SCK), cs(CS), _vref(reference_voltage), _PGA_gain(1)
+    miso(MISO), ad7790(MOSI, MISO, SCK), cs(CS), _vref(reference_voltage), _PGA_gain(1)
 {
     cs = true; // cs is active low
     ad7790.format(8, _SPI_MODE);

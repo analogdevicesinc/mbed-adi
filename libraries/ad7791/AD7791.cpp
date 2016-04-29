@@ -61,7 +61,7 @@ AD7791::AD7791(float reference_voltage,
                PinName MOSI,
                PinName MISO,
                PinName SCK) :
-			   miso(MISO), ad7791(MOSI, MISO, SCK), cs(CS),  _vref(reference_voltage)
+    miso(MISO), ad7791(MOSI, MISO, SCK), cs(CS),  _vref(reference_voltage)
 {
     cs = true; // cs is active low
     ad7791.format(8, _SPI_MODE);
@@ -111,8 +111,8 @@ void AD7791::write_mode_reg(uint8_t reg_val)
     } else {
         _continous_conversion = false;
     }
-/*  uint8_t range = (reg_val & 0x30);
-    _PGA_gain = 1 << (range >> 4);*/
+    /*  uint8_t range = (reg_val & 0x30);
+        _PGA_gain = 1 << (range >> 4);*/
 
 }
 
@@ -251,8 +251,8 @@ uint32_t AD7791::read_u32(void)
 
 uint16_t AD7791::read_u16(void)
 {
-  uint32_t data = read_u32();
-  return static_cast<uint16_t>((data & 0xffff00) >> 8);
+    uint32_t data = read_u32();
+    return static_cast<uint16_t>((data & 0xffff00) >> 8);
 }
 
 /**

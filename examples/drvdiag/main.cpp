@@ -203,7 +203,7 @@ void run_command()
 int main()
 
 {
-	ad7791.frequency(100000);
+    ad7791.frequency(100000);
     pc.printf("\r\n#### DrvDiag ####\r\n");
 
     while(1) {

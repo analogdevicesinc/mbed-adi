@@ -50,16 +50,29 @@
 #include "CN0216.h"
 extern Serial pc;
 
-  CN0216::CN0216(PinName CSAD7791, PinName MOSI, PinName MISO, PinName SCK) : ad7791(1.2, CSAD7791, MOSI, MISO, SCK)
-  {
-	_cal_weight = 0;
+/**
+ * CN0216 constructor
+ * @param CSAD7791 - Chipselect of the AD7791
+ * @param MOSI - MOSI line of the SPI bus
+ * @param MISO - MISO line of the SPI bus
+ * @param SCK - SCK line of the SPI bus
+ */
+CN0216::CN0216(PinName CSAD7791, PinName MOSI, PinName MISO, PinName SCK) : ad7791(1.2, CSAD7791, MOSI, MISO, SCK)
+{
+    _cal_weight = 0;
     _zero_scale_value = 0;
     _full_scale_value = 0;
-    _grams_per_bit = 0;
+    _weight_units_per_bit = 0;
+}
 
-  }
-  void CN0216::init(float cal_weight, uint8_t mode_val, uint8_t filter_val)
-  {
+/**
+ * Initializes the mode and filter values of the AD7791 and sets the weight to be used in calibration
+ * @param cal_weight - weight used in calibration
+ * @param mode_val - value of the mode register
+ * @param filter_val - value of the filter register
+ */
+void CN0216::init(float cal_weight, uint8_t mode_val, uint8_t filter_val)
+{
     _cal_weight = cal_weight;
     ad7791.frequency(500000);
     wait_ms(50);
@@ -69,62 +82,80 @@ extern Serial pc;
     wait_us(2);
     ad7791.write_filter_reg(filter_val);
     wait_ms(50);
-  }
+}
 
-  void CN0216::calibrate(CalibrationStep_t cal)
-  {
+/**
+ * Calibrates the CN0216 weigh scale
+ * @param cal - calibration step.
+ * Step CN0216::ZERO_SCALE_CALIBRATION will take CN0216::_NUMBER_OF_SAMPLES samples and use the minimum as value for the zero scale
+ * Step CN0216::FULL_SCALE_CALIBRATION will take CN0216::_NUMBER_OF_SAMPLES samples and use the average as value for the full scale
+ * Step COMPUTE_UNITS_PER_BIT will compute the grams per bit used in weight computation.
+ */
+void CN0216::calibrate(CalibrationStep_t cal)
+{
     uint64_t sum = 0;
     uint32_t min = 0xFFFFFFFF;
     uint32_t sample = 0;
-    switch(cal)
-    {
-    case ZERO_SCALE_CALIBRATION:
-    case FULL_SCALE_CALIBRATION:
-      for(int i = 0;i < _NUMBER_OF_SAMPLES;i++)
-      {
-    	  sample = ad7791.read_u32();
-    	  min = (min<sample) ? min : sample;
-    	  sum += ad7791.read_u32();
-		  wait_us(5);
-      }
-      if(cal == ZERO_SCALE_CALIBRATION)
-      {
-    	 // pc.printf("ZERO SCALE VALUE = %x",sum);
-    	  _zero_scale_value = min;
-      }
-      else
-      {
-    	//  pc.printf("FULL SCALE VALUE = %x",sum);
-    	  sum = sum / _NUMBER_OF_SAMPLES;
-    	  _full_scale_value = sum;
-      }
-    break;
+    switch(cal) {
+        case ZERO_SCALE_CALIBRATION:
+        case FULL_SCALE_CALIBRATION:
+            for(int i = 0; i < _NUMBER_OF_SAMPLES; i++) {
+                sample = ad7791.read_u32();
+                min = (min < sample) ? min : sample;
+                sum += ad7791.read_u32();
+                wait_us(5);
+            }
+            if(cal == ZERO_SCALE_CALIBRATION) {
+                // pc.printf("ZERO SCALE VALUE = %x",sum);
+                _zero_scale_value = min;
+            } else {
+                //  pc.printf("FULL SCALE VALUE = %x",sum);
+                sum = sum / _NUMBER_OF_SAMPLES;
+                _full_scale_value = sum;
+            }
+            break;
 
-    case COMPUTE_GRAM_PER_BIT:
-      _grams_per_bit = _cal_weight / (static_cast<float> (_full_scale_value - _zero_scale_value));  /* Calculate number of grams per LSB */
-     // pc.printf("GRAMS/LSB = %f", _grams_per_bit);
-    break;
-    default:
-    break;
+        case COMPUTE_UNITS_PER_BIT:
+            _weight_units_per_bit = _cal_weight / (static_cast<float> (_full_scale_value - _zero_scale_value));  /* Calculate number of grams per LSB */
+            // pc.printf("GRAMS/LSB = %f", _grams_per_bit);
+            break;
+        default:
+            break;
     }
 
-  }
+}
 
-  float CN0216::compute_weight(uint32_t data)
-  {
+/**
+ * Computes the weight based on the formula
+ * weight = (data - zeroscale) * weight_units_per_bit
+ * @param data read from the ADC
+ * @return weight based on data
+ */
+float CN0216::compute_weight(uint32_t data)
+{
 //	pc.printf("\r\nFULL_SCALE_VALUE = %x\r\nZERO_SCALE_VALUE = %x\r\nDATA READ = %x\r\nGRAMS/LSB = %f\r\n",_full_scale_value,data,_zero_scale_value,_grams_per_bit);
-	if(data<_zero_scale_value)
-		data = _zero_scale_value; // clamp data to 0
-	float weight_in_grams =  (static_cast<float>((data) - _zero_scale_value)) * _grams_per_bit;         /* Calculate weight */
+    if(data < _zero_scale_value)
+        data = _zero_scale_value; // clamp data to 0
+    float weight_in_grams =  (static_cast<float>((data) - _zero_scale_value)) * _weight_units_per_bit;         /* Calculate weight */
     return weight_in_grams;
-  }
-  uint32_t CN0216::read_u32()
-  {
+}
+
+/**
+ * Reads the AD7791
+ * @return value read by the ADC
+ */
+uint32_t CN0216::read_u32()
+{
     return ad7791.read_u32();
-  }
-  float CN0216::read_weight()  
-  {
-	uint32_t weight =  read_u32();
+}
+
+/**
+ * Reads the ADC and computes the weight based on the formula described above.
+ * @return weight
+ */
+float CN0216::read_weight()
+{
+    uint32_t weight =  read_u32();
     return compute_weight(weight);
-  }
-  
+}
+
