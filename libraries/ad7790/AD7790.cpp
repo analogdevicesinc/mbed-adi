@@ -224,6 +224,7 @@ uint16_t AD7790::read_u16(void)
     } else {
         timeout_cnt = _CONTINOUS_CONVERSION_TIMEOUT; // starts timeout
     }
+    wait_us(1);
 
     while(miso) { // wait for the MISO pin to go low.
         if(timeout_cnt) {
