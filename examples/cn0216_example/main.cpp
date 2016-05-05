@@ -65,8 +65,7 @@ void display_data(uint32_t data, float weight)
 }
 
 /**
- * Project entry-point - initializes the CN0357 shield, reads the data when the ADC is ready and outputs the sensor
- * value in PPM
+ * Project entry-point - initializes the CN0216 shield, reads the data when the ADC is ready and outputs the sensor value
  */
 
 //#define SINGLE_CONVERSION
