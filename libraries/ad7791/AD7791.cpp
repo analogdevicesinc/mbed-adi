@@ -51,6 +51,7 @@
 
 /**
  * @brief AD7791 constructor, sets CS pin and SPI format
+ * @param reference_voltage - the reference voltage to be used in computation
  * @param CS - (optional)chip select of the AD7791
  * @param MOSI - (optional)pin of the SPI interface
  * @param MISO - (optional)pin of the SPI interface

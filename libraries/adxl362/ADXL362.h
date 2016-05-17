@@ -1,6 +1,53 @@
 #ifndef ADXL362_H_
 #define ADXL362_H_
 
+/**
+*   @file     ADXL362.cpp
+*   @brief    Header file for ADXL362
+*   @author   Analog Devices Inc.
+*
+* For support please go to:
+* Github: https://github.com/analogdevicesinc/mbed-adi
+* Support: https://ez.analog.com/community/linux-device-drivers/microcontroller-no-os-drivers
+* Product: http://www.analog.com/adxl362
+* More: https://wiki.analog.com/resources/tools-software/mbed-drivers-all
+
+********************************************************************************
+* Copyright 2016(c) Analog Devices, Inc.
+*
+* All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions are met:
+*  - Redistributions of source code must retain the above copyright
+*    notice, this list of conditions and the following disclaimer.
+*  - Redistributions in binary form must reproduce the above copyright
+*    notice, this list of conditions and the following disclaimer in
+*    the documentation and/or other materials provided with the
+*    distribution.
+*  - Neither the name of Analog Devices, Inc. nor the names of its
+*    contributors may be used to endorse or promote products derived
+*    from this software without specific prior written permission.
+*  - The use of this software may or may not infringe the patent rights
+*    of one or more patent holders.  This license does not release you
+*    from the requirement that you obtain separate licenses from these
+*    patent holders to use this software.
+*  - Use of the software either in source or binary form, must be run
+*    on or directly connected to an Analog Devices Inc. component.
+*
+* THIS SOFTWARE IS PROVIDED BY ANALOG DEVICES "AS IS" AND ANY EXPRESS OR
+* IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, NON-INFRINGEMENT,
+* MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+* IN NO EVENT SHALL ANALOG DEVICES BE LIABLE FOR ANY DIRECT, INDIRECT,
+* INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+* LIMITED TO, INTELLECTUAL PROPERTY RIGHTS, PROCUREMENT OF SUBSTITUTE GOODS OR
+* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+* CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+* OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+* OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*
+********************************************************************************/
+
 #include "mbed.h"
 
 class ADXL362
@@ -141,11 +188,17 @@ public:
     void reset(void);
     void write_reg(ADXL362_register_t reg, uint8_t data);
     uint8_t read_reg(ADXL362_register_t reg);
-    uint64_t scan();
+    uint16_t read_reg_u16(ADXL362_register_t reg);
+    void write_reg_u16(ADXL362_register_t reg, uint16_t data);
 
+    /** ADXL general register R/W methods */
     void set_power_ctl_reg(uint8_t data);
     void set_filter_ctl_reg(uint8_t data);
+    uint8_t read_status();
+    void set_mode(ADXL362_modes_t mode);
 
+    /** ADXL X/Y/Z/T scanning methods*/
+    uint64_t scan();
     uint8_t scanx_u8();
     uint16_t scanx();
     uint8_t scany_u8();
@@ -154,15 +207,14 @@ public:
     uint16_t scanz();
     uint16_t scant();
 
-    uint8_t read_status();
-    void set_mode(ADXL362_modes_t mode);
-
+    /** ADXL362 activity methods */
     void set_activity_threshold(uint16_t threshold);
     void set_activity_time(uint8_t time);
     void set_inactivity_threshold(uint16_t threshold);
     void set_inactivity_time(uint16_t time);
     void set_act_inact_ctl_reg(uint8_t data);
 
+    /** ADXL362 interrupt methods */
     void set_interrupt1_pin(PinName in, uint8_t data, void (*callback_rising)(void), void (*callback_falling)(void), PinMode pull = PullNone);
     void set_interrupt2_pin(PinName in, uint8_t data, void (*callback_rising)(void), void (*callback_falling)(void), PinMode pull = PullNone);
     void enable_interrupt1();
@@ -176,35 +228,29 @@ public:
     bool get_int1();
     bool get_int2();
 
-
+    /** ADXL362 FIFO methods */
     uint16_t fifo_read_nr_of_entries();
     void fifo_setup(bool store_temp, ADXL362_FIFO_modes_t mode, uint16_t nr_of_entries);
     uint16_t fifo_read_u16();
     uint64_t fifo_scan();
 
-
-
-
+    SPI adxl362;    ///< SPI instance of the ADXL362
+    DigitalOut cs; ///< DigitalOut instance for the chipselect of the ADXL362
 
 private:
 
-    SPI adxl362;    ///< SPI instance of the AD7791
-    DigitalOut cs; ///< DigitalOut instance for the chipselect of the AD7791
-    uint16_t read_reg_u16(ADXL362_register_t reg);
-    InterruptIn *int1;
-    InterruptIn *int2;
-    DigitalIn int1_poll;
-    DigitalIn int2_poll;
-    bool int1_act_low;
-    bool int2_act_low;
-    bool temp_stored_in_fifo;
+    InterruptIn *_int1;
+    InterruptIn *_int2;
+    DigitalIn _int1_poll;
+    DigitalIn _int2_poll;
+    bool _int1_act_low;
+    bool _int2_act_low;
+    bool _temp_stored_in_fifo;
 
-    void write_reg_u16(ADXL362_register_t reg, uint16_t data);
-
-    const static uint8_t DUMMY_BYTE = 0xAA;
-    const static uint8_t WRITE_REG_CMD = 0x0A; // write register
-    const static uint8_t READ_REG_CMD = 0x0B; // read register
-    const static uint8_t READ_FIFO_CMD = 0x0D; // read FIFO
+    const static uint8_t _DUMMY_BYTE = 0xAA;
+    const static uint8_t _WRITE_REG_CMD = 0x0A; // write register
+    const static uint8_t _READ_REG_CMD = 0x0B; // read register
+    const static uint8_t _READ_FIFO_CMD = 0x0D; // read FIFO
     const static uint8_t _SPI_MODE = 0;
 };
 

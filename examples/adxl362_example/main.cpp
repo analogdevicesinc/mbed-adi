@@ -99,7 +99,7 @@ int main()
 #if(ADXL_INT_SEL == INTACC_PIN_1)
         if (adxl362.get_int1()) {
 #elif(ADXL_INT_SEL == INTACC_PIN_2)
-            if(adxl362.get_int2()) {
+        if(adxl362.get_int2()) {
 #endif
                 if (ui8awake == 0) {
                     ui8awake = 1;
@@ -111,7 +111,7 @@ int main()
                     lcd.display_string(1, 60, (int8_t *) "[mG]");
                     lcd.display_string(2, 60, (int8_t *) "[mG]");
 
-#if TEMP_ADC == 1
+#if (TEMP_ADC == 1)
                     lcd.display_string(3, 60, (int8_t *)"[ADC]");
 #else
                     lcd.display_string(3, 60, (int8_t *) "[C]");
@@ -234,6 +234,5 @@ int main()
                 }
             }
         }
-
     }
 
