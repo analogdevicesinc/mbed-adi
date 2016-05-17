@@ -45,11 +45,12 @@
 *
 ********************************************************************************/
 
-#define AD7791_PRESENT
-#define CN0216_PRESENT
+//#define AD7791_PRESENT
+//#define CN0216_PRESENT
 //#define AD7790_PRESENT
 //#define AD5270_PRESENT
 //#define CN0357_PRESENT
+#define ADXL362_PRESENT
 #define SPI_LOW_LEVEL
 
 #ifdef AD7791_PRESENT
@@ -77,6 +78,11 @@
 #include "cn0357_diag.h"
 #endif
 
+#ifdef ADXL362_PRESENT
+#include "ADXL362.h"
+#include "adxl362_diag.h"
+#endif
+
 using namespace std;
 //------------------------------------
 // Hyperterminal configuration
@@ -84,7 +90,8 @@ using namespace std;
 //------------------------------------
 
 #ifdef SPI_LOW_LEVEL
-DigitalOut CSA_pin(D8); // cs adc
+//DigitalOut CSA_pin(D8); // cs adc
+DigitalOut CSA_pin(D9); // cs accel
 DigitalOut CSR_pin(D6); // cs rdac
 SPI spibus(SPI_MOSI, SPI_MISO, SPI_SCK);
 #endif
@@ -113,4 +120,10 @@ AD5270_Diag ad5270diag(ad5270);
 #ifdef  CN0357_PRESENT
 CN0357 cn0357;
 CN0357_Diag cn0357diag(cn0357);
+#endif
+
+
+#ifdef  ADXL362_PRESENT
+ADXL362 adxl362(D9);
+ADXL362_Diag adxl362diag(adxl362);
 #endif

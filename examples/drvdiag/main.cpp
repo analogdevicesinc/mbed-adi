@@ -145,6 +145,26 @@ const vector<commands> cmdlist = {
 		{"cnparam"  ,      2,   [](){cn0357diag.set_sensor_param();}}
 #endif
 
+#ifdef ADXL362_PRESENT
+		{"xlrst" ,      0,   [](){adxl362diag.reset();}},
+		{"xlscan"  ,    0,   [](){adxl362diag.scan();}},
+		{"xlwr"  ,      2,   [](){adxl362diag.write_reg();}},
+		{"xlrd"  ,      1,   [](){adxl362diag.read_reg();}},
+		{"xlstat", 0 , [](){adxl362diag.read_status();}},
+		{"xlctl", 1 , [](){adxl362diag.write_ctl();  }},
+		{"xlftl", 1 , [](){adxl362diag.write_ftl();  }},
+
+		{"xlfrn",  0, [](){adxl362diag.fifo_read_nr_of_entries(); }},
+	    {"xlfset", 2, [](){adxl362diag.fifo_setup();              }},
+		{"xlfr16", 0, [](){adxl362diag.fifo_read_u16();           }},
+		{"xlfrs",  0, [](){adxl362diag.fifo_scan();               }},
+		{"xlintinit",0,[](){adxl362diag.intinit();}},
+		{"xlawake",0,[](){adxl362diag.checkawake();}
+		},
+
+
+#endif
+
 };
 // *INDENT-ON*
 
@@ -203,7 +223,7 @@ void run_command()
 int main()
 
 {
-    ad7791.frequency(100000);
+    // ad7791.frequency(100000);
     pc.printf("\r\n#### DrvDiag ####\r\n");
 
     while(1) {
