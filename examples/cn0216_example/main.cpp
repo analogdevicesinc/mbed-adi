@@ -47,7 +47,8 @@
 #include "mbed.h"
 #include "CN0216.h"
 
-const float CAL_WEIGHT = (150.0);
+const float CAL_WEIGHT = (500.0);
+
 
 Serial pc(USBTX, USBRX); ///< Serial interface to the pc
 
@@ -57,10 +58,15 @@ void flush_serial_buffer(void)
     return;
 }
 
-void display_data(uint32_t data, float weight)
+void display_data(uint32_t data, float weight, uint64_t timer)
 {
-    pc.printf("\r\nADC Input Voltage input = %f V", data);           /* Send valid voltage input value */
+    pc.printf("\r\nADC Input Voltage input = %x V", data);           /* Send valid voltage input value */
     pc.printf("\r\nSensor Input Weight = %f grams", weight);         /* Send valid grams value */
+
+
+    /*	pc.printf("%d ",timer);
+    	pc.printf("%x ",data);
+    	pc.printf("%f ",weight);*/
     pc.printf("\r\n");
 }
 
@@ -69,17 +75,18 @@ void display_data(uint32_t data, float weight)
  * value in PPM
  */
 
-//#define SINGLE_CONVERSION
-#define CONTINOUS_CONVERSION
+#define SINGLE_CONVERSION
+//#define CONTINOUS_CONVERSION
 
 int main()
 {
     /* Main variables */
+    //t.start();
     CN0216 cn0216;
 #ifdef SINGLE_CONVERSION
     cn0216.init(CAL_WEIGHT);
 #elif defined CONTINOUS_CONVERSION
-    cn0216.init(CAL_WEIGHT, 0x00, 0x07);
+    cn0216.init(CAL_WEIGHT, 0x08, 0x07);
 #else
 #error define SINGLE_CONVERSION or CONTINOUS_CONVERSION, but not both
 #endif
@@ -103,13 +110,15 @@ int main()
     cn0216.calibrate(CN0216::COMPUTE_UNITS_PER_BIT);
 
     /* Infinite loop */
+    uint64_t timer = 0;
     while (1) {
         wait_ms(1000);
-        {
-            uint32_t data = cn0216.read_u32();
-            float weight    = cn0216.compute_weight(data); //  Convert ADC data to voltage
-            display_data(data, weight); //  Display data thru UART
-        }
+
+        uint32_t data = cn0216.read_u32();
+        float weight    = cn0216.compute_weight(data); //  Convert ADC data to voltage
+        display_data(data, weight, timer); //  Display data thru UART
+
+        timer++;
     }
 
 

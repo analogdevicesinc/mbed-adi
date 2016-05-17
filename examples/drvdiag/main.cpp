@@ -55,6 +55,12 @@
 Serial pc(SERIAL_TX, SERIAL_RX);
 vector<string> cmdbuffer;
 
+static const uint16_t INACT_VAL = 50;
+static const uint16_t INACT_TIMER = 25 * 10;
+static const uint16_t ACT_VAL = 50;
+static const uint8_t ACT_TIMER = 100;
+static const uint16_t SCAN_SENSOR_TIME = 500;
+
 class commands
 {
 public:
@@ -145,6 +151,54 @@ const vector<commands> cmdlist = {
 		{"cnparam"  ,      2,   [](){cn0357diag.set_sensor_param();}}
 #endif
 
+#ifdef ADXL362_PRESENT
+		{"xlrst" ,      0,   [](){adxl362diag.reset();}},
+		{"xlscan"  ,    0,   [](){adxl362diag.scan();}},
+		{"xlwr"  ,      2,   [](){adxl362diag.write_reg();}},
+		{"xlrd"  ,      1,   [](){adxl362diag.read_reg();}},
+		{"xlstat", 0 , [](){adxl362diag.read_status();}},
+		{"xlctl", 1 , [](){adxl362diag.write_ctl();  }},
+		{"xlftl", 1 , [](){adxl362diag.write_ftl();  }},
+
+		{"xlfrn",  0, [](){adxl362diag.fifo_read_nr_of_entries(); }},
+	    {"xlfset", 2, [](){adxl362diag.fifo_setup();              }},
+		{"xlfr16", 0, [](){adxl362diag.fifo_read_u16();           }},
+		{"xlfrs",  0, [](){adxl362diag.fifo_scan();               }},
+		{"xlintinit",0,[](){
+			 adxl362.reset();
+			 pc.printf("adxl362 reset\r\n");
+			 wait_ms(500);
+			 adxl362.set_activity_threshold(ACT_VAL);
+			 adxl362.set_activity_time(ACT_TIMER / 10);
+
+			 adxl362.set_inactivity_threshold(INACT_VAL);
+			 adxl362.set_inactivity_time(INACT_TIMER);
+			 adxl362.set_act_inact_ctl_reg(0x3f);
+
+			 pc.printf("adxl362 set activity/inactivity\r\n");
+
+			 adxl362.disable_interrupt2();
+			 adxl362.set_interrupt2_pin(D2,0x40,&rising_adxl362,&falling_adxl362);
+			 extern bool awake;
+			 awake = true;
+
+			 pc.printf("adxl362 set interrupt\r\n");
+			 adxl362.enable_interrupt2();
+			 adxl362.set_mode(ADXL362::MEASUREMENT);
+			 pc.printf("adxl362 measurement started\r\n");
+
+		}},
+		{
+			"xlawake",0,[](){
+				extern bool awake;
+				if(awake) pc.printf("awaken");
+				else      pc.printf("asleep");
+			}
+		},
+
+
+#endif
+
 };
 // *INDENT-ON*
 
@@ -203,7 +257,7 @@ void run_command()
 int main()
 
 {
-    ad7791.frequency(100000);
+    // ad7791.frequency(100000);
     pc.printf("\r\n#### DrvDiag ####\r\n");
 
     while(1) {
