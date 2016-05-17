@@ -65,10 +65,18 @@ public:
     void fifo_setup(void);
     void fifo_read_u16(void);
     void fifo_scan(void);
+    void intinit(void);
+    void checkawake(void);
 
 
 private:
     ADXL362& dut;
+
+    static const uint16_t INACT_VAL = 50;
+    static const uint16_t INACT_TIMER = 50 * 10;
+    static const uint16_t ACT_VAL = 50;
+    static const uint8_t ACT_TIMER = 100;
+    static const uint16_t SCAN_SENSOR_TIME = 500;
 };
 void rising_adxl362();
 void falling_adxl362();

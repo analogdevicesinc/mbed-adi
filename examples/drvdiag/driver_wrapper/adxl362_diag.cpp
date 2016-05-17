@@ -136,6 +136,38 @@ void ADXL362_Diag::fifo_scan(void)
     pc.printf("fifo scan - %x ", data);
 }
 
+void ADXL362_Diag::intinit(void)
+{
+
+    dut.reset();
+    pc.printf("adxl362 reset\r\n");
+    wait_ms(500);
+    dut.set_activity_threshold(ACT_VAL);
+    dut.set_activity_time(ACT_TIMER / 10);
+
+    dut.set_inactivity_threshold(INACT_VAL);
+    dut.set_inactivity_time(INACT_TIMER);
+    dut.set_act_inact_ctl_reg(0x3f);
+
+    pc.printf("adxl362 set activity/inactivity\r\n");
+
+    dut.disable_interrupt1();
+    dut.set_interrupt1_pin(D2, 0x40, &rising_adxl362, &falling_adxl362);
+
+    awake = true;
+
+    pc.printf("adxl362 set interrupt\r\n");
+    dut.enable_interrupt1();
+    dut.set_mode(ADXL362::MEASUREMENT);
+    pc.printf("adxl362 measurement started\r\n");
+}
+
+void ADXL362_Diag::checkawake(void)
+{
+    if(awake) pc.printf("awaken");
+    else      pc.printf("asleep");
+}
+
 void rising_adxl362()
 {
     awake = true;
