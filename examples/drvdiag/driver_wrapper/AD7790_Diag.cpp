@@ -1,6 +1,6 @@
 /**
-*   @file     cn0357_diag.cpp
-*   @brief    Source file for the CN0357 wrapper used by the driver diag
+*   @file     ad7790_diag.cpp
+*   @brief    Source file for the AD7790 wrapper used by the driver diag
 *   @author   Analog Devices Inc.
 *
 * For support please go to:
@@ -48,31 +48,81 @@
 #include <stdio.h>
 #include <vector>
 #include <string>
-#include "CN0357_diag.h"
+#include "AD7790_Diag.h"
 
 extern Serial pc;
 extern vector<string> cmdbuffer;
 
-CN0357_Diag::CN0357_Diag(CN0357& cn) : dut(cn)
+AD7790_Diag::AD7790_Diag(AD7790& ad) : dut(ad)
 {
 
 }
-void CN0357_Diag::set_RDAC()
+
+void AD7790_Diag::init()
 {
-    float res = strtof(cmdbuffer[1].c_str(), NULL);
-    dut.set_RDAC_value(res);
-    pc.printf("Wrote %f", res);
 
 }
-void CN0357_Diag::read_ppm(void)
+void AD7790_Diag::reset()
 {
-    pc.printf("Wrote %f", dut.read_ppm());
+    dut.reset();
+    pc.printf("Reseted AD7790");
 }
 
-void CN0357_Diag::set_sensor_param(void)
+void AD7790_Diag::write_mode()
 {
-    float range = strtof(cmdbuffer[1].c_str(), NULL);
-    float sens = strtof(cmdbuffer[2].c_str(), NULL);
-    sens = sens * pow(10, -9);
-    pc.printf("Suggested RDAC val: %f ", dut.set_sensor_parameters(range, sens));
+    uint8_t regVal = strtol(cmdbuffer[1].c_str(), NULL, 16);
+    dut.write_mode_reg(regVal);
+    pc.printf("Wrote mode");
+}
+void AD7790_Diag::read_mode()
+{
+    pc.printf("Mode reg: %x ", dut.read_mode_reg());
+}
+
+void AD7790_Diag::write_filter()
+{
+    uint8_t regVal = strtol(cmdbuffer[1].c_str(), NULL, 16);
+    dut.write_filter_reg(regVal);
+    pc.printf("Wrote filter");
+}
+void AD7790_Diag::read_filter()
+{
+    pc.printf("Returned: %x ", dut.read_filter_reg());
+}
+void AD7790_Diag::read_data()
+{
+    pc.printf("Data reg: %x ", dut.read_data_reg());
+}
+
+void AD7790_Diag::read_status()
+{
+    pc.printf("Status reg: %x ", dut.read_status_reg());
+}
+
+void AD7790_Diag::read_u16()
+{
+    pc.printf("Data reg: %x ", dut.read_u16());
+}
+void AD7790_Diag::read_voltage()
+{
+    pc.printf("Voltage: %f ", dut.read_voltage());
+}
+void AD7790_Diag::set_continous_mode()
+{
+    uint8_t regVal = strtol(cmdbuffer[1].c_str(), NULL, 16);
+    dut.set_conversion_mode(static_cast<AD7790::AD7790Mode_t>(regVal));
+    pc.printf("Mode set to %d", regVal);
+}
+void AD7790_Diag::set_reference_voltage()
+{
+    float ref = strtof(cmdbuffer[1].c_str(), NULL);
+    dut.set_reference_voltage(ref);
+    pc.printf("Reference Voltage set to %f", ref);
+}
+
+void AD7790_Diag::set_channel()
+{
+    uint8_t regVal = strtol(cmdbuffer[1].c_str(), NULL, 16);
+    dut.set_channel(static_cast<AD7790::AD7790Channel_t>(regVal));
+    pc.printf("Mode set to %d", regVal);
 }

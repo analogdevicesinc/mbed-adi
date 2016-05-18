@@ -1,6 +1,6 @@
 /**
-*   @file     ad5270_diag.h
-*   @brief    Header file for the AD5270 wrapper used by the driver diag
+*   @file     AD7791_diag.cpp
+*   @brief    Source file for the AD7791 wrapper used by the driver diag
 *   @author   Analog Devices Inc.
 *
 * For support please go to:
@@ -44,38 +44,91 @@
 *
 ********************************************************************************/
 
-#ifndef AD5270_DIAG_H_
-#define AD5270_DIAG_H_
-#include "AD5270.h"
+#include "mbed.h"
+#include <stdio.h>
+#include <vector>
+#include <string>
+#include "AD7791_Diag.h"
 
-class AD5270_Diag
+extern Serial pc;
+extern vector<string> cmdbuffer;
+
+AD7791_Diag::AD7791_Diag(AD7791& ad) : dut(ad)
 {
-public:
-    AD5270_Diag(AD5270& ad);
-    void enable_50TP_programming(void);
-    void store_50TP(void);
-    void disable_50TP_programming(void);
 
-    void write_RDAC(void);
-    void read_RDAC(void);
-    void write_cmd(void);
-    void set_HiZ(void);
+}
 
-    void read_50TP_last_address(void);
-    void read_50TP_memory(void);
+void AD7791_Diag::init()
+{
 
-    void write_ctrl_reg(void);
-    void read_ctrl_reg(void);
+}
+void AD7791_Diag::reset()
+{
+    dut.reset();
+    pc.printf("Reseted AD7791");
+}
 
-    void reset_RDAC(void);
-    void change_mode(void);
+void AD7791_Diag::write_mode()
+{
+    uint8_t regVal = strtol(cmdbuffer[1].c_str(), NULL, 16);
+    dut.write_mode_reg(regVal);
+    pc.printf("Wrote mode");
+}
+void AD7791_Diag::read_mode()
+{
+    pc.printf("Mode reg: %x ", dut.read_mode_reg());
+}
 
-    void write_wiper_reg(void);
-    void read_wiper_reg(void);
+void AD7791_Diag::write_filter()
+{
+    uint8_t regVal = strtol(cmdbuffer[1].c_str(), NULL, 16);
+    dut.write_filter_reg(regVal);
+    pc.printf("Wrote filter");
+}
+void AD7791_Diag::read_filter()
+{
+    pc.printf("Returned: %x ", dut.read_filter_reg());
+}
+void AD7791_Diag::read_data()
+{
+    pc.printf("Data reg: %x ", dut.read_data_reg());
+}
 
-private:
-    AD5270& dut;
-};
+void AD7791_Diag::read_status()
+{
+    pc.printf("Status reg: %x ", dut.read_status_reg());
+}
 
+void AD7791_Diag::read_u16()
+{
+    pc.printf("Data reg: %x ", dut.read_u16());
+}
 
-#endif /* AD5270_DIAG_H_ */
+void AD7791_Diag::read()
+{
+    pc.printf("Data reg: %x ", dut.read_u32());
+}
+
+void AD7791_Diag::read_voltage()
+{
+    pc.printf("Voltage: %f ", dut.read_voltage());
+}
+void AD7791_Diag::set_continous_mode()
+{
+    uint8_t regVal = strtol(cmdbuffer[1].c_str(), NULL, 16);
+    dut.set_conversion_mode(static_cast<AD7791::AD7791Mode_t>(regVal));
+    pc.printf("Mode set to %d", regVal);
+}
+void AD7791_Diag::set_reference_voltage()
+{
+    float ref = strtof(cmdbuffer[1].c_str(), NULL);
+    dut.set_reference_voltage(ref);
+    pc.printf("Reference Voltage set to %f", ref);
+}
+
+void AD7791_Diag::set_channel()
+{
+    uint8_t regVal = strtol(cmdbuffer[1].c_str(), NULL, 16);
+    dut.set_channel(static_cast<AD7791::AD7791Channel_t>(regVal));
+    pc.printf("Mode set to %d", regVal);
+}

@@ -55,32 +55,32 @@
 
 #ifdef AD7791_PRESENT
 #include "AD7791.h"
-#include "ad7791_diag.h"
+#include "AD7791_Diag.h"
 #endif
 
 #ifdef CN0216_PRESENT
 #include "CN0216.h"
-#include "cn0216_diag.h"
+#include "CN0216_Diag.h"
 #endif
 
 #ifdef AD7790_PRESENT
 #include "AD7790.h"
-#include "ad7790_diag.h"
+#include "AD7790_Diag.h"
 #endif
 
 #ifdef AD5270_PRESENT
 #include "AD5270.h"
-#include "ad5270_diag.h"
+#include "AD5270_Diag.h"
 #endif
 
 #ifdef CN0357_PRESENT
 #include "CN0357.h"
-#include "cn0357_diag.h"
+#include "CN0357_Diag.h"
 #endif
 
 #ifdef ADXL362_PRESENT
 #include "ADXL362.h"
-#include "adxl362_diag.h"
+#include "ADXL362_Diag.h"
 #endif
 
 using namespace std;

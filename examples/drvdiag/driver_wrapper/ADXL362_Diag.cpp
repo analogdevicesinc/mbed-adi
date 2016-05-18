@@ -49,7 +49,7 @@
 #include <vector>
 #include <string>
 #include "ADXL362.h"
-#include "ADXL362_diag.h"
+#include "ADXL362_Diag.h"
 
 extern Serial pc;
 extern vector<string> cmdbuffer;

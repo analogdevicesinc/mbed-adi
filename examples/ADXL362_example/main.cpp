@@ -1,6 +1,6 @@
 /**
- *   @file     EVAL_ADXL362_ARDZ.cpp
- *   @brief    Header file for the EVAL-ADXL362-ARDZ board
+ *   @file     main.cpp
+ *   @brief    Main file for the ADXL362-example project
  *   @author   Analog Devices Inc.
  *
  * For support please go to:
@@ -45,43 +45,44 @@
  *
  ********************************************************************************/
 
-#ifndef EVAL_ADXL362_ARDZ_H
-#define EVAL_ADXL362_ARDZ_H
+#include "mbed.h"
+#include "ADXL362.h"
+#include "Lcd.h"
+#include "EVAL_ADXL362_ARDZ.h"
 
-#include "lcd.h"
-#include "adxl362.h"
+Serial pc(USBTX, USBRX); ///< Serial interface to the pc
+Lcd lcd;
+ADXL362 adxl362(D9);
+EVAL_ADXL362_ARDZ adxl362_board(lcd, adxl362);
 
-
-class EVAL_ADXL362_ARDZ
+void flush_serial_buffer(void)
 {
-public:
-    EVAL_ADXL362_ARDZ(Lcd& _lcd, ADXL362& _adxl362) ;
-    void ADXL_setup();
-    void ADXL_scan_xyzt();
-    bool ADXL_get_int();
+    while (pc.readable())
+        pc.getc();
+    return;
+}
 
-    void LCD_setup();
-    void LCD_init_display();
-    void LCD_deinit_display();
-    void LCD_display_level();
-    void LCD_display_values();
+int main()
+{
 
-    Lcd lcd;
-    ADXL362 adxl362;
+    adxl362_board.LCD_setup();
+    adxl362_board.ADXL_setup();
 
-private:
+    /* Infinite loop */
+    while (1) {
+        if(adxl362_board.ADXL_get_int()) { // ADXL362 is AWAKE ?
 
-    uint8_t _lcd_on;
-    int16_t _x_axis_data;
-    int16_t _y_axis_data;
-    int16_t _z_axis_data;
-    int16_t _t_data;
+            adxl362_board.LCD_init_display(); // will only turn on if it's off
+            wait_ms(100);
+            adxl362_board.ADXL_scan_xyzt();
+            adxl362_board.LCD_display_values();
+            adxl362_board.LCD_display_level();
 
-    static const uint16_t INACT_VAL = 50;
-    static const uint16_t INACT_TIMER = 100 * 10;
-    static const uint16_t ACT_VAL = 50;
-    static const uint8_t ACT_TIMER = 100;
-    static const uint16_t SCAN_SENSOR_TIME = 500;
-};
+        } else {
 
-#endif
+            adxl362_board.LCD_deinit_display(); // will only turn off it it's on
+
+        }
+    }
+}
+

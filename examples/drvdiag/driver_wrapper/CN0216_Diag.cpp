@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 
-#include "cn0216_diag.h"
+#include "CN0216_Diag.h"
 
 extern Serial pc;
 extern vector<string> cmdbuffer;
