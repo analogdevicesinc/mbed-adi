@@ -51,6 +51,10 @@
 #include <stdio.h>
 #include "mbed.h"
 
+
+/**
+ * @brief Lcd class
+ */
 class Lcd
 {
 public:

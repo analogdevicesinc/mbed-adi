@@ -51,7 +51,9 @@
 #include "Lcd.h"
 #include "ADXL362.h"
 
-
+/**
+ * @brief EVAL-ADXL362_ARDZ accelerometer shield
+ */
 class EVAL_ADXL362_ARDZ
 {
 public:

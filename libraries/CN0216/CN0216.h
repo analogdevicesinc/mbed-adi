@@ -51,6 +51,9 @@
 #ifndef CN0216_H_
 #define CN0216_H_
 
+/**
+ * @brief EVAL-CN0216 weigh scale measurement shield
+ */
 class CN0216
 {
 public:

@@ -50,6 +50,9 @@
 
 #include "mbed.h"
 
+/**
+ * @brief Analog devices ADXL362 Digital Output MEMS Accelerometer
+ */
 class ADXL362
 {
 public:
