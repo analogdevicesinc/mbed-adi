@@ -104,8 +104,8 @@ public:
 
 
     /* Low level methods */
-    uint16_t write_cmd(uint8_t command, uint16_t data = 0x00);
-    uint16_t write_reg(uint16_t data);
+    uint16_t write_cmd(uint8_t command, uint16_t data = 0x00, bool toggle_cs = true);
+    uint16_t write_reg(uint16_t data, bool toggle_cs = true);
 
     /* Methods that deal with resistance in float format*/
     uint16_t calc_RDAC(float resistance);
@@ -119,6 +119,8 @@ public:
     void disable_50TP_programming(void);
     uint8_t read_50TP_last_address(void);
     uint16_t read_50TP_memory(uint8_t address);
+
+    void daisy_chain(uint8_t *buffer, uint8_t size);
 
     SPI ad5270;    ///< SPI instance of the AD5270
     DigitalOut cs; ///< DigitalOut instance for the chip select of the AD5270

@@ -125,11 +125,11 @@ void AD5270::frequency(int hz)
  * @param data - (optional)value for the requested command
  * @return response form the AD5270
  */
-uint16_t AD5270::write_cmd(uint8_t command, uint16_t data)
+uint16_t AD5270::write_cmd(uint8_t command, uint16_t data, bool toggle_cs)
 {
     /* build 16 bit data to be written - Command + Value */
     uint16_t ui16Command = ((command & 0x3C) << 8) | (data & 0x3FF);
-    return write_reg(ui16Command);
+    return write_reg(ui16Command, toggle_cs);
 }
 
 /**
@@ -164,16 +164,16 @@ void AD5270::disable_50TP_programming()
  * @param data to be written
  * @return data returned by the AD5270
  */
-uint16_t AD5270::write_reg(uint16_t data)
+uint16_t AD5270::write_reg(uint16_t data, bool toggle_cs)
 {
     uint16_t result;
     uint8_t upper_byte = (data >> 8) & 0xFF;
     uint8_t lower_byte =  data & 0xFF;
     ad5270.format(8, _SPI_MODE);
-    cs = false;
+    cs = false & toggle_cs;
     result  = ((ad5270.write(upper_byte)) << 8);
     result |=   ad5270.write(lower_byte);
-    cs = true;
+    cs = true & toggle_cs;
     return result;
 }
 
@@ -279,5 +279,11 @@ void AD5270::change_mode(AD5270Modes_t mode)
     write_cmd(SW_SHUTDOWN, static_cast<uint8_t>(mode));
 }
 
-
+void AD5270::daisy_chain(uint8_t *buffer, uint8_t size)
+{
+    cs = 0;
+    for(int i = 0; i < size; i++)
+        buffer[i] = ad5270.write(buffer[i]);
+    cs = 1;
+}
 
