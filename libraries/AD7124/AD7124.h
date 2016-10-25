@@ -49,7 +49,6 @@
 #define AD7790_H
 
 #include "mbed.h"
-#include "AD7124_regs.h"
 
 /**
  * Comment this line if you want to turn off the debug mode.
