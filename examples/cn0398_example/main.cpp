@@ -74,7 +74,10 @@ int main()
     cn0398.setup();
     cn0398.init();
     wait_ms(500);
-    pc.printf("Done\r\n");
+    pc.printf("CN0398 - ph and moisture measurement demo\r\nPress any key to continue...\r\n");
+    pc.getc();
+    wait_ms(10);
+    flush_serial();
 
     pc.printf("Do you want to perform calibration [y/N] ? ");
     char response = pc.getc();
