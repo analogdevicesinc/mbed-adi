@@ -1,7 +1,6 @@
-
 /**
-*   @file     config.h
-*   @brief    Config file for driver diag tool
+*   @file     ad7124_diag.h
+*   @brief    Header file for the AD7124 wrapper used by the driver diag
 *   @author   Analog Devices Inc.
 *
 * For support please go to:
@@ -45,134 +44,43 @@
 *
 ********************************************************************************/
 
-//#define AD7791_PRESENT
-//#define CN0216_PRESENT
-//#define AD7790_PRESENT
-//#define AD5270_PRESENT
-//#define CN0357_PRESENT
-//#define ADXL362_PRESENT
-//#define CN0398_PRESENT
-//#define CN0397_PRESENT
-#define CN0396_PRESENT
-//#define AD7124_PRESENT
-#define SPI_LOW_LEVEL
-
-#ifdef AD7791_PRESENT
-#include "AD7791.h"
-#include "AD7791_Diag.h"
-#endif
-
-#ifdef CN0216_PRESENT
-#include "CN0216.h"
-#include "CN0216_Diag.h"
-#endif
-
-#ifdef AD7790_PRESENT
-#include "AD7790.h"
-#include "AD7790_Diag.h"
-#endif
-
-#ifdef AD5270_PRESENT
-#include "AD5270.h"
-#include "AD5270_Diag.h"
-#endif
-
-#ifdef CN0357_PRESENT
-#include "CN0357.h"
-#include "CN0357_Diag.h"
-#endif
-
-#ifdef ADXL362_PRESENT
-#include "ADXL362.h"
-#include "ADXL362_Diag.h"
-#endif
-
-#ifdef AD7124_PRESENT
-#include "AD7124.h"
-#include "AD7124_Diag.h"
-#endif
-
-#ifdef CN0398_PRESENT
+#ifndef CN0398_DIAG_H_
+#define CN0398_DIAG_H_
 #include "CN0398.h"
-#include "CN0398_Diag.h"
-#endif
+#include "AD7124.h"
+
+class CN0398_Diag
+{
+public:
+    CN0398_Diag(CN0398& ad);
+
+    void init();
+    void enable_channel(int channel);
+    void disable_channel(int channel);
+    void enable_current_source();
+    void toggle_output(int channel, uint8_t state);
+    void readt();
+
+    void readm();
+    void offsetph();
+    void calibp(int point);
+    void readp();
+
+    void write_reg();
+    void read_reg();
+    void reset();
+    /* void read_data();
+     void read_volt();*/
+    void start_single_conversion();
+    float data_to_voltage(uint32_t data);
+
+private:
+    CN0398& dut;
+    const float default_offset_voltage = -0.000136;
+    float offset_voltage;
+    float default_calibration_ph[2][2] = {{4, 0.114451051}, {10, -0.0795903802}};
+    float calibration_ph[2][2];
+};
 
 
-#ifdef CN0397_PRESENT
-#include "CN0397.h"
-#include "CN0397_Diag.h"
-#endif
-
-#ifdef CN0396_PRESENT
-#include "CN0396.h"
-#include "CN0396_Diag.h"
-#endif
-
-using namespace std;
-//------------------------------------
-// Hyperterminal configuration
-// 9600 bauds, 8-bit data, no parity
-//------------------------------------
-
-#ifdef SPI_LOW_LEVEL
-//DigitalOut CSA_pin(D8); // cs adc
-DigitalOut CSA_pin(D4); // cs accel
-DigitalOut CSR_pin(D6); // cs rdac
-SPI spibus(SPI_MOSI, SPI_MISO, SPI_SCK);
-#endif
-
-#ifdef AD7791_PRESENT
-AD7791 ad7791(1.2, D8);
-AD7791_Diag ad7791diag(ad7791);
-#endif
-
-#ifdef CN0216_PRESENT
-CN0216 cn0216;
-CN0216_Diag cn0216diag(cn0216);
-#endif
-
-
-#ifdef AD7790_PRESENT
-AD7790 ad7790(1.2, D8);
-AD7790_Diag ad7790diag(ad7790);
-#endif
-
-#ifdef AD5270_PRESENT
-AD5270 ad5270(D6, 20000);
-AD5270_Diag ad5270diag(ad5270);
-#endif
-
-#ifdef  CN0357_PRESENT
-CN0357 cn0357;
-CN0357_Diag cn0357diag(cn0357);
-#endif
-
-
-#ifdef  ADXL362_PRESENT
-ADXL362 adxl362(D9);
-ADXL362_Diag adxl362diag(adxl362);
-#endif
-
-
-#ifdef  AD7124_PRESENT
-AD7124 ad7124(D10);
-AD7124_Diag ad7124diag(ad7124);
-#endif
-
-#ifdef CN0398_PRESENT
-CN0398 cn0398(D10);
-CN0398_Diag cn0398diag(cn0398);
-
-#endif
-
-#ifdef CN0397_PRESENT
-CN0397 cn0397(D10);
-CN0397_Diag cn0397diag(cn0397);
-#endif
-
-#ifdef CN0396_PRESENT
-#include "AD5270_Diag.h"
-CN0396 cn0396(D10, D6, D4);
-CN0396_Diag cn0396diag(cn0396);
-AD5270_Diag ad5270diag(cn0396.rdac);
-#endif
+#endif /* AD5270_DIAG_H_ */

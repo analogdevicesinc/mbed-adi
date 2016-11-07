@@ -1,12 +1,12 @@
-
 /**
-*   @file     config.h
-*   @brief    Config file for driver diag tool
+*   @file     main.cpp
+*   @brief    Main file for the CN0357-example project
 *   @author   Analog Devices Inc.
 *
 * For support please go to:
 * Github: https://github.com/analogdevicesinc/mbed-adi
 * Support: https://ez.analog.com/community/linux-device-drivers/microcontroller-no-os-drivers
+* Product: www.analog.com/EVAL-CN0357-ARDZ
 * More: https://wiki.analog.com/resources/tools-software/mbed-drivers-all
 
 ********************************************************************************
@@ -44,135 +44,22 @@
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 ********************************************************************************/
-
-//#define AD7791_PRESENT
-//#define CN0216_PRESENT
-//#define AD7790_PRESENT
-//#define AD5270_PRESENT
-//#define CN0357_PRESENT
-//#define ADXL362_PRESENT
-//#define CN0398_PRESENT
-//#define CN0397_PRESENT
-#define CN0396_PRESENT
-//#define AD7124_PRESENT
-#define SPI_LOW_LEVEL
-
-#ifdef AD7791_PRESENT
-#include "AD7791.h"
-#include "AD7791_Diag.h"
-#endif
-
-#ifdef CN0216_PRESENT
-#include "CN0216.h"
-#include "CN0216_Diag.h"
-#endif
-
-#ifdef AD7790_PRESENT
-#include "AD7790.h"
-#include "AD7790_Diag.h"
-#endif
-
-#ifdef AD5270_PRESENT
-#include "AD5270.h"
-#include "AD5270_Diag.h"
-#endif
-
-#ifdef CN0357_PRESENT
-#include "CN0357.h"
-#include "CN0357_Diag.h"
-#endif
-
-#ifdef ADXL362_PRESENT
-#include "ADXL362.h"
-#include "ADXL362_Diag.h"
-#endif
-
-#ifdef AD7124_PRESENT
-#include "AD7124.h"
-#include "AD7124_Diag.h"
-#endif
-
-#ifdef CN0398_PRESENT
-#include "CN0398.h"
-#include "CN0398_Diag.h"
-#endif
-
-
-#ifdef CN0397_PRESENT
-#include "CN0397.h"
-#include "CN0397_Diag.h"
-#endif
-
-#ifdef CN0396_PRESENT
+#include "mbed.h"
 #include "CN0396.h"
-#include "CN0396_Diag.h"
-#endif
 
-using namespace std;
-//------------------------------------
-// Hyperterminal configuration
-// 9600 bauds, 8-bit data, no parity
-//------------------------------------
+Serial pc(SERIAL_TX, SERIAL_RX);
 
-#ifdef SPI_LOW_LEVEL
-//DigitalOut CSA_pin(D8); // cs adc
-DigitalOut CSA_pin(D4); // cs accel
-DigitalOut CSR_pin(D6); // cs rdac
-SPI spibus(SPI_MOSI, SPI_MISO, SPI_SCK);
-#endif
+int main()
+{
+    pc.baud(115200);
+    pc.printf("Initializing \r\n");
+    CN0396 cn0396(D10, D6, D4);
+    cn0396.init();
+    wait_ms(500);
 
-#ifdef AD7791_PRESENT
-AD7791 ad7791(1.2, D8);
-AD7791_Diag ad7791diag(ad7791);
-#endif
-
-#ifdef CN0216_PRESENT
-CN0216 cn0216;
-CN0216_Diag cn0216diag(cn0216);
-#endif
-
-
-#ifdef AD7790_PRESENT
-AD7790 ad7790(1.2, D8);
-AD7790_Diag ad7790diag(ad7790);
-#endif
-
-#ifdef AD5270_PRESENT
-AD5270 ad5270(D6, 20000);
-AD5270_Diag ad5270diag(ad5270);
-#endif
-
-#ifdef  CN0357_PRESENT
-CN0357 cn0357;
-CN0357_Diag cn0357diag(cn0357);
-#endif
-
-
-#ifdef  ADXL362_PRESENT
-ADXL362 adxl362(D9);
-ADXL362_Diag adxl362diag(adxl362);
-#endif
-
-
-#ifdef  AD7124_PRESENT
-AD7124 ad7124(D10);
-AD7124_Diag ad7124diag(ad7124);
-#endif
-
-#ifdef CN0398_PRESENT
-CN0398 cn0398(D10);
-CN0398_Diag cn0398diag(cn0398);
-
-#endif
-
-#ifdef CN0397_PRESENT
-CN0397 cn0397(D10);
-CN0397_Diag cn0397diag(cn0397);
-#endif
-
-#ifdef CN0396_PRESENT
-#include "AD5270_Diag.h"
-CN0396 cn0396(D10, D6, D4);
-CN0396_Diag cn0396diag(cn0396);
-AD5270_Diag ad5270diag(cn0396.rdac);
-#endif
+    while(1) {
+        cn0396.read();
+        wait_ms(1000);
+    }
+    return 0;
+}
