@@ -1,4 +1,4 @@
-#include "thermocouple.h"
+#include "Thermocouple.h"
 
 // http://srdata.nist.gov/its90/download/allcoeff.tab
 

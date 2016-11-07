@@ -44,7 +44,7 @@ while splitted:
 
     class_name = "Thermocouple_Type_" + tctype.capitalize()
     lut_def_name = "TYPE_" + tctype.capitalize() + "_LUT"
-    print(lut_def_name)
+    #print(lut_def_name)
 
     i=0
     state=0
@@ -60,7 +60,7 @@ while splitted:
         else:
             state=0
         i=i+1
-    print(lut)
+    #print(lut)
     del splitted[:i]
     i=0
 
@@ -72,7 +72,7 @@ while splitted:
         del lut[0]
 
     j=0
-    print lut
+    #print lut
     lutfloat=[]
     for val in lut:
         b=1
@@ -127,16 +127,16 @@ while splitted:
                 exp.append(splitted[i+6])
                 exp.append(splitted[i+9])
                 i=i+10
-                print exp
+                #print exp
                 break
             i=i+1
         if(word=='exponential:'):
-            print("exponential")
+            #print("exponential")
             del splitted[:i + 1]
             i=0
             break
         del splitted[:i+1]
-        print splitted
+        #print splitted
         i=0
 
         ranger[ranger_index].append(splitted[0])
@@ -146,8 +146,8 @@ while splitted:
         for i in range(nr_of_coef):
             values[ranger_index].append(splitted[i])
         del splitted[:nr_of_coef]
-        print ranger
-        print values
+        #print ranger
+        #print values
         i=0
 
     with open("Thermocouple.h", "a") as out:
@@ -256,8 +256,8 @@ while splitted:
                 a=val.split("E")
                 poly.append(a[0])
                 power.append(int(a[1]))
-            print(poly)
-            print(power)
+            #print(poly)
+            #print(power)
             out.write("\t{")
             for r in ran:
                 out.write(r.rjust(11) +", ")

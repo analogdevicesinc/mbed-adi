@@ -1,1 +1,1 @@
-#include "thermocouple.h"
+#include "Thermocouple.h"
