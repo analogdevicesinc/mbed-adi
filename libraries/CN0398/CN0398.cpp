@@ -208,7 +208,7 @@ void CN0398::disable_channel(int channel)
     wait_ms(ms_delay);
 }
 
-/*
+
 void CN0398::enable_current_source0(int current_source_channel)
 {
     AD7124::ad7124_registers regNr = AD7124::AD7124_IOCon1; //Select ADC_Control register
@@ -229,7 +229,7 @@ void CN0398::enable_current_source1(int current_source_channel)
     setValue &= 0xFFFFFF;
     ad7124.WriteDeviceRegister(regNr, setValue);    // Write data to ADC
     wait_ms(ms_delay);
-}*/
+}
 
 void CN0398::set_digital_output(ad_digital_output_t p, bool state)
 {

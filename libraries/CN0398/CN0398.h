@@ -190,8 +190,8 @@ public:
      */
     void calibrate_ph_offset();
 
-    /* void enable_current_source0(int current_source_channel);
-     void enable_current_source1(int current_source_channel);*/
+     void enable_current_source0(int current_source_channel);
+     void enable_current_source1(int current_source_channel);
 
     /**
      * @brief toggles the digital outputs on or off
